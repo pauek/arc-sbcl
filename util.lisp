@@ -1,0 +1,35 @@
+
+(declaim (optimize (debug 3)))
+
+(in-package :arc)
+
+(defun %car (x)
+  (and (consp x) (car x)))
+
+;; Symbols
+
+(defun %sym (sym)
+  (intern (format nil "@~a" sym)
+	  (find-package :arc)))
+
+(defun %boundp (sym)
+  (boundp (%sym sym)))
+
+(defun %symval (sym)
+  (and (%boundp sym)
+       (symbol-value (%sym sym))))
+
+(defun %set (sym val)
+  (set (%sym sym) val))
+
+(defstruct tagged type rep)
+
+(defun %mk-tagged (type rep)
+  (make-tagged :type type :rep rep))
+
+(defun %tagged? (x) (typep x 'tagged))
+(defun %type (x)    (tagged-type x))
+(defun %rep (x)     (tagged-rep x))
+
+(defun %tag? (tag x)
+  (and x (%tagged? x) (eq tag (%type x))))

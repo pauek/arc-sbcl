@@ -1,43 +1,53 @@
 
 (declaim (optimize (debug 3)))
 
-(defparameter *special-forms* '(quote fn if set))
-
-(macrolet ((_gen (name args form)
-	     `(defgeneric ,name (wlk ,@args)
-		(:method (wlk ,@args) 
-		  (declare (ignore wlk)) ,form))))
-  (_gen wliteral (x) x)
-  (_gen wsyntax (form) form)
-  (_gen wsymbol (s) s)
-  (_gen wcall (head rest) (cons head rest)))
+(macrolet ((_dg (name)
+	     `(defgeneric ,name (wlk form)
+		(:method (wlk form) 
+		  (declare (ignore wlk form))))))
+  (_dg wliteral)
+  (_dg wsyntax)
+  (_dg wsymbol)
+  (_dg wcall))
 
 (defgeneric wspecial (wlk head rest))
 
-(defmacro %defwalk (type name args &body body)
-  (let* ((wlk (gensym))
-	 (w (if type `(,wlk (eql ',type)) wlk)))
-    `(defmethod ,name (,w ,@args)
+(defmacro %defwalk (class name args &body body)
+  (let ((wlk (gensym)))
+    `(defmethod ,name ((,wlk ,class) ,@args)
        (flet ((walk (f) (walk ,wlk f)))
 	 ,@body))))
 
-(defmacro defwalk (type class args &body body)
-  (let ((name (intern (format nil "W~a" class) 
+(defgeneric special-form? (wlk form)
+  (:method (w f) nil))
+
+(defmacro defwalker (class &optional super slots)
+  (flet ((_slot (s) 
+	   (if (consp s)
+	       `(,(car s) :accessor ,(car s) :initform ,(cdr s))
+	       `(,s :accessor ,s :initform nil))))
+    `(defclass ,class ,super 
+       (,@(mapcar #'_slot slots)
+	(spforms :accessor special-forms :allocation :class)))))
+
+(defmacro defwalk (class form args &body body)
+  (let ((name (intern (format nil "W~a" form) 
 		      (find-package :arc))))
-    `(%defwalk ,type ,name ,args ,@body)))
+    `(%defwalk ,class ,name ,args ,@body)))
 
-(defmacro defwalk/sp (type spform (rest) &body body)
-  `(defwalk ,type special ((head (eql ',spform)) ,rest)
-     ,@body))
+(defmacro defwalk/sp (class spform (rest) &body body)
+  `(progn
+     (defmethod special-form? ((wlk ,class) (f (eql ',spform))) t)
+     (defwalk ,class special ((head (eql ',spform)) ,rest)
+       ,@body)))
 
-;; Default defwalk/sp
+;; Default walker: identity.
 
-(defmacro %defwalk/sp (spform (rest) &body body)
-  `(defwalk/sp nil ,spform (,rest) ,@body))
+(defwalker arc)
 
-(%defwalk/sp quote (rest) `(quote ,@rest))
+(defwalk/sp arc quote (rest) `(quote ,@rest))
 
-(%defwalk/sp if (rest)
+(defwalk/sp arc if (rest)
   (labels ((_if (args)
 	     (cond ((null args) nil)
 		   ((null (cdr args)) (walk (car args)))
@@ -46,7 +56,7 @@
 			   ,(_if (cddr args)))))))
     (_if rest)))
 
-(%defwalk/sp fn (rest)
+(defwalk/sp arc fn (rest)
   (labels ((_warg (a)
 	     (if (and (consp a) (eq (car a) 'o))
 		 `(o ,(cadr a) ,(walk (caddr a)))
@@ -57,7 +67,7 @@
 		   (t args))))
     `(fn ,(_wargs (car rest)) ,@(mapcar #'walk (cdr rest)))))
 
-(%defwalk/sp set (rest)
+(defwalk/sp arc set (rest)
   `(set ,@(mapcar #'walk rest))) ; ?
 
 ;; Walk function
@@ -73,7 +83,7 @@
 	 (_symbol? (s) 
 	   (symbolp s))
 	 (_special? (s) 
-	   (member s *special-forms*)))
+	   (special-form? wlk s)))
     (if (atom form)
 	(cond ((_literal? form) (wliteral wlk form))
 	      ((_syntax? form)  (wsyntax wlk form))

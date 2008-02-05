@@ -3,6 +3,8 @@
 
 (in-package :arc)
 
+(defwalker aexp (arc))
+
 (defun macro? (x)
   (when (symbolp x)
     (let ((fn (%symval x)))

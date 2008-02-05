@@ -11,13 +11,18 @@
 (defvar *curr* '(nil . 0))
 (defvar *failed* nil)
 
+(defgeneric == (a b)
+  (:method (a b) (equal a b)))
+
 (defmacro deftest (name &body body)
-  (pushnew name *tests*)
-  `(defun ,name ()
-     (setf *curr* (cons ',name 1))
-     (format t "~a~15t " ',name)
-     (macrolet ((_e (x) `(arc-eval ',x))) ,@body)
-     (terpri)))
+  `(progn
+     (eval-when (:compile-toplevel :load-toplevel :execute)
+       (pushnew ',name *tests*))
+     (defun ,name ()
+       (setf *curr* (cons ',name 1))
+       (format t "~a~15t " ',name)
+       (macrolet ((_e (x) `(arcev ',x))) ,@body)
+       (terpri))))
      
 (defun chk (res)
   (princ (if res #\. #\+))
@@ -26,15 +31,15 @@
 
 (defun arc-read-form (str)
   (with-input-from-string (_s str)
-    (w/no-colon-2 (s _s) (read s))))
+    (w/no-colon (s _s) (read s))))
 
-(defun chkcmp (res str)
-  (chk (== res (ac (arc-read-form str) nil))))
+(defun chkc (res str)
+  (chk (== res (arcc (arc-read-form str) nil))))
 
 (defun chkev (res str)
-  (chk (== res (arc-eval (arc-read-form str)))))
+  (chk (== res (arcev (arc-read-form str)))))
 
-(defun test ()
+(defun run-all ()
   (setf *failed* nil)
   (loop for _t in (reverse *tests*)
      do (funcall (symbol-function _t)))
@@ -46,7 +51,5 @@
 	    (format t " [~a]" (cdr f))
 	    (format t "~&  ~a [~a]" (car f) (cdr f)))
 	(setf prev (car f)))))
+  (format t "~%~%")
   (values))
-
-(defgeneric == (a b)
-  (:method (a b) (equal a b)))

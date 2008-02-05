@@ -1,5 +1,6 @@
 
 (defpackage :arc
-  (:use :cl :sb-gray :sb-bsd-sockets :sb-ext)
-  (:export :ac 
-	   :aeval))
+  (:use :cl :sb-gray :pk-walk)
+  (:export :arcc
+	   :arcev
+	   :w/no-colon))

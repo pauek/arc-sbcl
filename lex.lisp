@@ -80,6 +80,6 @@
 
 ;;;; Transform ':' into '\:' throughout.
 
-(defmacro w/no-colon-2 ((var stream) &body body)
+(defmacro w/no-colon ((var stream) &body body)
   `(with-open-stream (,var (new-esc-stream #\: ,stream))
      ,@body))

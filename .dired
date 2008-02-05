@@ -1,0 +1,5 @@
+Local variables:
+dired-omit-files-p: t
+dired-omit-files: "^\\.$\\|^\\.git\\|^\\.dired$"
+ls-lisp-dirs-first: t
+End:

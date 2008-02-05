@@ -29,13 +29,15 @@
 (deftest t-plus
   (chkev  "hi" "(+ \"h\" \"i\")"))
 
+#|
 (deftest t-ar-funcall-n
-  (chk (== 'ar-funcall0 (car (ac '(+)))))
-  (chk (== 'ar-funcall1 (car (ac '(+ 1)))))
-  (chk (== 'ar-funcall2 (car (ac '(+ 1 2)))))
-  (chk (== 'ar-funcall3 (car (ac '(+ 1 2 3)))))
-  (chk (== 'ar-funcall4 (car (ac '(+ 1 2 3 4)))))
+  (chk (== 'ar-funcall0 (car (arcc '(+)))))
+  (chk (== 'ar-funcall1 (car (arcc '(+ 1)))))
+  (chk (== 'ar-funcall2 (car (arcc '(+ 1 2)))))
+  (chk (== 'ar-funcall3 (car (arcc '(+ 1 2 3)))))
+  (chk (== 'ar-funcall4 (car (arcc '(+ 1 2 3 4)))))
   (chkev 10 "(+ 1 1 1 1 1 1 1 1 1 1)"))
+|#
 
 (deftest t-funcalls
   (chkev 3 "((fn (x) (+ 1 x)) 2)")
@@ -67,6 +69,8 @@
 
 ; TODO: t-coerce
 
+#|
 (deftest t-compose
-  (chkcmp '((compose a b c) 1) ; ??
-	  "(a:b:c 1)"))
+  (chkc '((compose a b c) 1) ; ??
+	"(a:b:c 1)"))
+|#

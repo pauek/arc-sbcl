@@ -5,13 +5,11 @@
   :components
   ((:file "pkgs")
    (:file "util")
-   (:file "wlk")
-   ;(:file "lex")
-   ;(:file "aexp")
-   ;(:file "acpt")
-   ;(:file "ac")
-   )
+   (:file "lex")
+   (:file "ac"))
   :serial t
+
+  :depends-on (:pk-walk)
 
   :perform
   (test-op :after (op c)
@@ -24,13 +22,8 @@
     :pathname "test/"
     :components
     ((:file "pkgs")
-     (:file "ut")
-     (:file "wlk")
-     ;(:file "lex")
-     ;(:file "aexp")
-     ;(:file "acpt")
-     ;(:file "ac")
-     )
+     (:file "util")
+     (:file "ac"))
     :serial t))
 
   :depends-on (:arc)
@@ -38,5 +31,4 @@
   :perform
   (test-op :after (op c)
     (let ((*package* (find-package :arc/test)))
-      (funcall (intern (symbol-name ':run-all))
-               :verbose t))))
+      (funcall (intern (symbol-name ':run-all))))))

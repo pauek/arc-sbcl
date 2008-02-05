@@ -37,7 +37,9 @@
   (chk (== res (arcc (arc-read-form str) nil))))
 
 (defun chkev (res str)
-  (chk (== res (arcev (arc-read-form str)))))
+  (chk (== res 
+	   (ignore-errors 
+	     (arcev (arc-read-form str))))))
 
 (defun run-all ()
   (setf *failed* nil)

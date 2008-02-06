@@ -41,17 +41,22 @@
 	   (ignore-errors 
 	     (arcev (arc-read-form str))))))
 
-(defun run-all ()
-  (setf *failed* nil)
-  (loop for _t in (reverse *tests*)
-     do (funcall (symbol-function _t)))
-  (when *failed*
-    (format t "~%Failed:~%")
-    (let (prev)
-      (dolist (f (reverse *failed*))
-	(if (eq prev (car f))
-	    (format t " [~a]" (cdr f))
-	    (format t "~&  ~a [~a]" (car f) (cdr f)))
-	(setf prev (car f)))))
-  (format t "~%~%")
-  (values))
+(defun run (&rest which)
+  (flet ((in-arc (sym)
+	   (intern (symbol-name sym))))
+    (let ((tests (if which 
+		     (mapcar #'in-arc which)
+		     (reverse *tests*))))
+      (setf *failed* nil)
+      (loop for _t in tests
+	 do (funcall (symbol-function _t)))
+      (when *failed*
+	(format t "~%Failed:~%")
+	(let (prev)
+	  (dolist (f (reverse *failed*))
+	    (if (eq prev (car f))
+		(format t " [~a]" (cdr f))
+		(format t "~&  ~a [~a]" (car f) (cdr f)))
+	    (setf prev (car f)))))
+      (format t "~%~%")
+      (values))))

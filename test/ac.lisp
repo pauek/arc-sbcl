@@ -37,7 +37,12 @@
   (chkev '((2 3) . 1) "((fn (x . y) (cons y x)) 1 2 3)")
   (chkev '((1 2)) "((fn x x) '(1 2))")
   (chkev 11 "((fn (x (o y 6)) (+ x y)) 5 6)")
-  (chkev 11 "((fn (x (o y 6)) (+ x y)) 5)"))
+  (chkev 11 "((fn (x (o y 6)) (+ x y)) 5)")
+  (chkev #\b "((fn ((o a #\\a)) a) #\\b)")
+  (chkev nil "((fn ((o a)) a))")
+  (chkev "zz" "((fn ((o a)) \"zz\"))")
+  (chkev 10 "((fn (x y (o z 1)) (* z (+ x y))) 5 5)")
+  (chkev 20 "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)"))
 
 (deftest t-if 
   (chkev 0 "(if t   0 1)")

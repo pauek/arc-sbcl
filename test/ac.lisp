@@ -46,9 +46,10 @@
   (chkev 20           "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)"))
 
 (deftest t-env
-  (chkev 1 "((fn ((o x)) (set x 1) x))")
-  (chkev 2 "((fn ((o x 5)) ((fn ((o x 2)) x))))")
-  (chkev 3 "((fn ((o x)) ((fn (y) (set x y)) 3) x))"))
+  (chkev #\a "((fn (x) (set x #\\a) x) #\\z)")
+  (chkev 1   "((fn ((o x)) (set x 1) x))")
+  (chkev 2   "((fn ((o x 5)) ((fn ((o x 2)) x))))")
+  (chkev 3   "((fn ((o x)) ((fn (y) (set x y)) 3) x))"))
 
 (deftest t-if 
   (chkev 0 "(if t   0 1)")
@@ -66,8 +67,6 @@
   (chkev '(1 (2 (3 4))) "((fn (x) `(1 (2 ,x))) '(3 4))")
   (chkev '((1 () 2 3))  "((fn x `((1 () ,@x))) 2 3)"))
 
-(deftest t-set 
-  (chkev #\a "((fn (x) (set x #\\a) x) #\\z)"))
 
 (deftest t-brackets
   (chkev 2 "([+ _ 1] 1)"))

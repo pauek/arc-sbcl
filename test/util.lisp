@@ -41,6 +41,13 @@
 	   (ignore-errors 
 	     (arcev (arc-read-form str))))))
 
+(defun chkerr (str)
+  (chk (handler-case (arcev (arc-read-form str))
+	 (error () t)
+	 (:no-error (res) 
+	   (declare (ignore res)) 
+	   nil))))
+
 (defun run (&rest which)
   (flet ((in-arc (sym)
 	   (intern (symbol-name sym))))

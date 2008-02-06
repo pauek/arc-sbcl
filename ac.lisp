@@ -7,28 +7,21 @@
 
 (in-package :arc)
 
-;;; Base arc walker
+;;; Base arc walker (do I need this?)
 
 (defwalker arc)
 
-(defwalk/sp arc quote (rest) `(quote ,@rest))
+(defwalk/sp arc quote (rest) 
+  `(quote ,@rest))
 
-(defwalk/sp arc if (rest)
-  `(if ,@(mapcar #'walk rest))) ; ?
-
-(defwalk/sp arc fn (rest)
-  (labels ((_warg (a)
-	     (if (and (consp a) (eq (car a) 'o))
-		 `(o ,(cadr a) ,(walk (caddr a)))
-		 a))
-	   (_wargs (args)
-	     (cond ((null args) nil)
-		   ((consp args) (mapcar #'_warg args))
-		   (t args))))
-    `(fn ,(_wargs (car rest)) ,@(mapcar #'walk (cdr rest)))))
-
-(defwalk/sp arc set (rest)
-  `(set ,@(mapcar #'walk rest))) ; ?
+;;; SBCL backquote
+(macrolet ((_pass (what)
+	     `(defwalk/sp arc ,what (rest)
+		`(,',what ,@(mapcar #'walk rest)))))
+  (_pass sb-impl::backq-list)
+  (_pass sb-impl::backq-list*)
+  (_pass sb-impl::backq-cons)
+  (_pass sb-impl::backq-append))
 
 
 ;;; Macro expansion
@@ -125,16 +118,6 @@
 			  (_pairs (cddr args))))
 		   (t (error "Odd number of arguments to set")))))
     `(progn ,@(_pairs rest))))
-
-;;; SBCL backquote
-
-(macrolet ((_pass (what)
-	     `(defwalk/sp c ,what (rest)
-		`(,',what ,@(mapcar #'walk rest)))))
-  (_pass sb-impl::backq-list)
-  (_pass sb-impl::backq-list*)
-  (_pass sb-impl::backq-cons)
-  (_pass sb-impl::backq-append))
 
 ;;; arcc & arcev
 

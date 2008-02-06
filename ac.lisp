@@ -122,6 +122,16 @@
 		   (t (error "Odd number of arguments to set")))))
     `(progn ,@(_pairs rest))))
 
+;;; SBCL backquote
+
+(macrolet ((_pass (what)
+	     `(defwalk/sp c ,what (rest)
+		`(,',what ,@(mapcar #'walk rest)))))
+  (_pass sb-impl::backq-list)
+  (_pass sb-impl::backq-list*)
+  (_pass sb-impl::backq-cons)
+  (_pass sb-impl::backq-append))
+
 ;;; arcc & arcev
 
 (defun arcc (form &optional env)

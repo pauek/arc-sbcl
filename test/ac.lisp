@@ -49,7 +49,9 @@
   (chkev #\a "((fn (x) (set x #\\a) x) #\\z)")
   (chkev 1   "((fn ((o x)) (set x 1) x))")
   (chkev 2   "((fn ((o x 5)) ((fn ((o x 2)) x))))")
-  (chkev 3   "((fn ((o x)) ((fn (y) (set x y)) 3) x))"))
+  (chkev 3   "((fn ((o x)) ((fn (y) (set x y)) 3) x))")
+  (chkerr "((fn (x y) nil))")
+  (chkerr "((fn ((o x) y) x))"))
 
 (deftest t-if 
   (chkev 0 "(if t   0 1)")

@@ -1,8 +1,10 @@
 
 (defpackage :arc
   (:use :cl :sb-gray :pk-walk)
-  (:export :arcc
+  (:export :arcmac
+	   :arcc
 	   :arcev
 	   :w/no-colon
 	   :fn
-	   :o))
+	   :o
+	   :arcsym))

@@ -26,19 +26,18 @@
 
 ;;; Macro expansion
 
-(defwalker macex (arc))
+(defwalker mac (arc))
 
-(defun macro? (x)
-  (when (symbolp x)
-    (let ((fn (%symval x)))
-      (when (%tag? 'mac fn)
-	(%rep fn)))))
-
-(defwalk macex list (head rest)
-  (let ((m (macro? head)))
-    (if m
-	(walk (apply m rest))
-	(cons head (mapcar #'walk rest)))))
+(defwalk mac list (head rest)
+  (flet ((_macro? (x)
+	   (when (symbolp x)
+	     (let ((fn (%symval x)))
+	       (when (%tag? 'mac fn)
+		 (%rep fn))))))
+    (let ((m (_macro? head)))
+      (if m
+	  (walk (apply m rest))
+	  (cons head (mapcar #'walk rest))))))
 
 ;;; Continuation passing style
 
@@ -119,14 +118,16 @@
 		   (t (error "Odd number of arguments to set")))))
     `(progn ,@(_pairs rest))))
 
-;;; arcc & arcev
+;;; arcme & arcc & arcev
 
-(defun arcc (form &optional env)
-  (declare (ignore env))
+(defun arcmac (form)
+  (walk 'mac form))
+
+(defun arcc (form)
   (walk 'c form))
 
-(defun arcev (form &optional env)
-  (eval (arcc form env)))
+(defun arcev (form)
+  (eval (arcc form)))
 
 ;;; Primitives
 
@@ -151,10 +152,3 @@
 (defprim cons (a b)
   (cons a b))
 
-#|
-(defparameter @do 
-  (%mk-tagged 'mac #'(lambda (&rest body) `(progn ,@body))))
-
-(defparameter @progn
-  (%mk-tagged 'mac #'(lambda (&rest body) `(fistro ,@body))))
-|#

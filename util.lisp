@@ -16,6 +16,8 @@
   (intern (format nil "@~a" sym)
 	  (find-package :arc)))
 
+(defun arcsym (s) (%sym s))
+
 (defun %boundp (sym)
   (boundp (%sym sym)))
 

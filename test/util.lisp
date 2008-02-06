@@ -33,8 +33,11 @@
   (with-input-from-string (_s str)
     (w/no-colon (s _s) (read s))))
 
+(defun chkmac (res str)
+  (chk (== res (arcmac (arc-read-form str)))))
+
 (defun chkc (res str)
-  (chk (== res (arcc (arc-read-form str) nil))))
+  (chk (== res (arcc (arc-read-form str)))))
 
 (defun chkev (res str)
   (chk (== res 

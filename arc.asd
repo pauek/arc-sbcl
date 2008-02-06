@@ -23,6 +23,7 @@
     :components
     ((:file "pkgs")
      (:file "util")
+     (:file "mac")
      (:file "ac"))
     :serial t))
 

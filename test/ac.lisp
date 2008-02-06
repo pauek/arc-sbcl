@@ -1,10 +1,6 @@
 
 (in-package :arc/test)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;;   Test suite 
-
 (deftest t-literals
   (chkev 1          "1")
   (chkev #\a        "#\\a")

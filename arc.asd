@@ -31,5 +31,4 @@
   :perform
   (test-op :after (op c)
     (let ((*package* (find-package :arc/test)))
-      (funcall (intern (symbol-name ':run)) 
-	       :t-literals :t-arith-int))))
+      (funcall (intern (symbol-name ':run))))))

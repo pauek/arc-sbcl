@@ -62,7 +62,6 @@
 (defwalker c (arc))
 
 (defwalk c list (head rest)
-  ;;assume funcall
   `(funcall (%symval ',head) ,@(mapcar #'walk rest)))
 
 ;;; arcc & arcev
@@ -75,16 +74,22 @@
   (eval (arcc form env)))
 
 (defmacro defprim (name args &body body)
-  `(defparameter ,(intern (format nil "@~a" name)) 
-     (lambda ,args ,@body)))
+  (let ((_name (intern (format nil "@~a" name))))
+    `(progn
+       (defun ,_name ,args ,@body)
+       (defparameter ,_name #',_name))))
 
 (macrolet ((_arith (op)
 	     `(defprim ,op (&rest args)
 		(apply #',op args))))
-  (_arith +)
   (_arith -)
   (_arith *)
   (_arith /))
+
+(defprim + (&rest args)
+  (if (stringp (car args))
+      (apply #'concatenate 'string args)
+      (apply #'+ args)))
 
 #|
 (defparameter @do 

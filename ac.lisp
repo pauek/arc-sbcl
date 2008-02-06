@@ -62,7 +62,26 @@
 (defwalker c (arc))
 
 (defwalk c list (head rest)
-  `(funcall (%symval ',head) ,@(mapcar #'walk rest)))
+  (let ((wrest (mapcar #'walk rest)))
+    (cond ((symbolp head)
+	   `(funcall (%symval ',head) ,@wrest))
+	  (t 
+	   `(funcall ,(walk head) ,@wrest)))))
+
+(defwalk/sp c fn (rest)
+  (labels ((_argl (x)
+	     (cond ((consp (cdr x))
+		    (cons (car x) (_argl (cdr x))))
+		   ((null (cdr x))
+		    (cons (car x) nil))
+		   (t (cons (car x) (list '&rest (cdr x))))))
+	   (_args (a) (cond ((null a) nil)
+			    ((symbolp a) `(&rest ,a))
+			    ((consp a) (_argl a))
+			    (t a))))
+    `(lambda ,(_args (car rest))
+       ;; Append environment!! (append (ac-arglist args) env)
+       ,@(mapcar #'walk (cdr rest)))))
 
 ;;; arcc & arcev
 
@@ -72,6 +91,8 @@
 
 (defun arcev (form &optional env)
   (eval (arcc form env)))
+
+;;; Primitives
 
 (defmacro defprim (name args &body body)
   (let ((_name (intern (format nil "@~a" name))))
@@ -90,6 +111,9 @@
   (if (stringp (car args))
       (apply #'concatenate 'string args)
       (apply #'+ args)))
+
+(defprim cons (a b)
+  (cons a b))
 
 #|
 (defparameter @do 

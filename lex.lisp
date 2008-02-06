@@ -17,7 +17,7 @@
   (set-macro-character #\[
     #'(lambda (stream char)
 	(declare (ignore char))
-	(list 'fn (list '_) (read-delimited-list #\] stream t)))))
+	(list 'fn (list (intern "_")) (read-delimited-list #\] stream t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;

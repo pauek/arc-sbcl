@@ -25,20 +25,11 @@
   (chkev  1 "(*)")
   (chkev -1 "(- 1)")
   (chkev  1 "(+ 1)")
-  (chkev 15 "(+ (+ 1 2) (+ 3 (+ 4 5)))"))
+  (chkev 15 "(+ (+ 1 2) (+ 3 (+ 4 5)))")
+  (chkev 10 "(+ 1 1 1 1 1 1 1 1 1 1)"))
 
 (deftest t-plus
   (chkev  "hi" "(+ \"h\" \"i\")"))
-
-#|
-(deftest t-ar-funcall-n
-  (chk (== 'ar-funcall0 (car (arcc '(+)))))
-  (chk (== 'ar-funcall1 (car (arcc '(+ 1)))))
-  (chk (== 'ar-funcall2 (car (arcc '(+ 1 2)))))
-  (chk (== 'ar-funcall3 (car (arcc '(+ 1 2 3)))))
-  (chk (== 'ar-funcall4 (car (arcc '(+ 1 2 3 4)))))
-  (chkev 10 "(+ 1 1 1 1 1 1 1 1 1 1)"))
-|#
 
 (deftest t-funcalls
   (chkev 3 "((fn (x) (+ 1 x)) 2)")

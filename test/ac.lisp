@@ -6,13 +6,13 @@
 ;;;;   Test suite 
 
 (deftest t-literals
-  (chkev 1    "1")
-  (chkev #\a  "#\\a")
-  (chkev "a"  "\"a\"")
-  (chkev 1.45 "1.45")
-  (chkev nil  "nil")
-  (chkev t    "t")
-  (chkev 'a "(quote a)")
+  (chkev 1          "1")
+  (chkev #\a        "#\\a")
+  (chkev "a"        "\"a\"")
+  (chkev 1.45       "1.45")
+  (chkev nil        "nil")
+  (chkev t          "t")
+  (chkev 'a         "(quote a)")
   (chkev '(1 2 3)   "(quote (1 2 3))"))
 
 
@@ -73,9 +73,11 @@
   (chkev '(1 (2 (3 4))) "((fn (x) `(1 (2 ,x))) '(3 4))")
   (chkev '((1 () 2 3))  "((fn x `((1 () ,@x))) 2 3)"))
 
-
 (deftest t-brackets
-  (chkev 2 "([+ _ 1] 1)"))
+  (chkev 2        "([+ _ 1] 1)")
+  (chkev '(1 . 2) "([cons _ 2] 1)")
+  (chkev "hi, ho" "([+ _ \", ho\"] \"hi\")"))
+
 
 ; TODO: t-coerce
 

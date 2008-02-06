@@ -14,13 +14,7 @@
 (defwalk/sp arc quote (rest) `(quote ,@rest))
 
 (defwalk/sp arc if (rest)
-  (labels ((_if (args)
-	     (cond ((null args) nil)
-		   ((null (cdr args)) (walk (car args)))
-		   (t `(if ,(walk (car args))
-			   ,(walk (cadr args))
-			   ,(_if (cddr args)))))))
-    (_if rest)))
+  `(if ,@(mapcar #'walk rest))) ; ?
 
 (defwalk/sp arc fn (rest)
   (labels ((_warg (a)
@@ -69,6 +63,15 @@
 	   `(funcall (%symval ',head) ,@wrest))
 	  (t 
 	   `(funcall ,(walk head) ,@wrest)))))
+
+(defwalk/sp c if (rest)
+  (labels ((_if (args)
+	     (cond ((null args) nil)
+		   ((null (cdr args)) (walk (car args)))
+		   (t `(if ,(walk (car args))
+			   ,(walk (cadr args))
+			   ,(_if (cddr args)))))))
+    (_if rest)))
 
 (defwalk/sp c fn (rest)
   (let (syms)

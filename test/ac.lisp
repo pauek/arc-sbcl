@@ -12,8 +12,9 @@
   (chkev 1.45 "1.45")
   (chkev nil  "nil")
   (chkev t    "t")
-  (chkev '(quote a) "'(quote a)")
-  (chkev '(1 2 3)   "'(1 2 3)"))
+  (chkev 'a "(quote a)")
+  (chkev '(1 2 3)   "(quote (1 2 3))"))
+
 
 (deftest t-arith-int
   (chkev  3 "(+ 1 2)")

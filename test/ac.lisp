@@ -35,7 +35,9 @@
   (chkev 3 "((fn (x) (+ 1 x)) 2)")
   (chkev 5 "((fn (a b) (+ a b)) 2 3)")
   (chkev '((2 3) . 1) "((fn (x . y) (cons y x)) 1 2 3)")
-  (chkev '((1 2)) "((fn x x) '(1 2))"))
+  (chkev '((1 2)) "((fn x x) '(1 2))")
+  (chkev 11 "((fn (x (o y 6)) (+ x y)) 5 6)")
+  (chkev 11 "((fn (x (o y 6)) (+ x y)) 5)"))
 
 (deftest t-if 
   (chkev 0 "(if t   0 1)")

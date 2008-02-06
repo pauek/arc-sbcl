@@ -29,7 +29,8 @@
   (chkev 10 "(+ 1 1 1 1 1 1 1 1 1 1)"))
 
 (deftest t-plus
-  (chkev  "hi" "(+ \"h\" \"i\")"))
+  (chkev  "hi"         "(+ \"h\" \"i\")")
+  (chkev  "hi, ho, ho" "(+ \"hi\" \", ho\" \", ho\")"))
 
 (deftest t-funcalls
   (chkev -1           "((fn () -1))")
@@ -57,8 +58,11 @@
   (chkev 0 "(if t   0 1)")
   (chkev 1 "(if nil 0 1)")
   (chkev 0 "(if t   0 nil 1 2)")
+  (chkev 0 "(if t   0 t   1 2)")
   (chkev 1 "(if nil 0 t   1 2)")
-  (chkev 2 "(if nil 0 nil 1 2)"))
+  (chkev 2 "(if nil 0 nil 1 2)")
+  (chkev 3 "(if nil 0 nil 1 nil 2 t   3 nil 4)")
+  (chkev 4 "(if nil 0 nil 1 nil 2 nil 3 t   4)"))
 
 (deftest t-backq
   (chkev '(1 2)         "((fn (x) `(1 ,x)) 2)")

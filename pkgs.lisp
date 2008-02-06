@@ -3,4 +3,5 @@
   (:use :cl :sb-gray :pk-walk)
   (:export :arcc
 	   :arcev
-	   :w/no-colon))
+	   :w/no-colon
+	   :fn))

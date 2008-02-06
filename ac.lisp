@@ -61,6 +61,8 @@
 
 (defwalker c (arc))
 
+(defvar *env* nil)
+
 (defwalk c list (head rest)
   (let ((wrest (mapcar #'walk rest)))
     (cond ((symbolp head)
@@ -100,11 +102,25 @@
 			      ((symbolp a) `(&rest ,a))
 			      ((consp a) (_argl nil a))
 			      (t (_err)))))
-      (let ((args (_args (car rest))))
+      (let ((args (_args (car rest)))
+	    (body (let ((*env* (append syms *env*)))
+		    (mapcar #'walk (cdr rest)))))
 	`(lambda ,args
 	   (declare (ignorable ,@syms)) ;; Avoid SBCL warning
-	   ;; Append environment!! (append (ac-arglist args) env)
-	   ,@(mapcar #'walk (cdr rest)))))))
+	   ,@body)))))
+
+(defwalk/sp c set (rest)
+  (labels ((_pair (place val)
+	     (if (member place *env*)
+		 `(setf ,place ,val)
+		 `(setf ,(%sym place) ,val)))
+	   (_pairs (args)
+	     (cond ((null args) nil)
+		   ((consp (cdr args)) 
+		    (cons (_pair (car args) (walk (cadr args)))
+			  (_pairs (cddr args))))
+		   (t (error "Odd number of arguments to set")))))
+    `(progn ,@(_pairs rest))))
 
 ;;; arcc & arcev
 

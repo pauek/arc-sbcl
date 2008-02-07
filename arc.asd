@@ -1,4 +1,8 @@
 
+;;; Implementation of Arc in SBCL
+;;; 2008 (c) Pau Fernandez
+;;; See COPYING for details
+
 (defsystem arc
   :description "Arc implementation"
 

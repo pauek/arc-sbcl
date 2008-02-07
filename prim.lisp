@@ -34,6 +34,9 @@
 	((hash-table-p fn) (gethash (car args) fn))
 	(t (error "Call to inappropriate object [~a]" fn))))
 
+(defprim bound (x)
+  (%boundp x))
+
 ;; cons, car, cdr...
 
 (defprim cons (a b)
@@ -231,8 +234,7 @@
 	   (_wr2 (name)
 	     `(defprim ,name (&rest args)
 		(when (consp args)
-		  (write (car args) 
-			 :stream (_port (cdr args))))
+		  (princ (car args) (_port (cdr args))))
 		(force-output)
 		nil)))
   (_wr1 writec c write-char)

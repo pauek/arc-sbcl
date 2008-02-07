@@ -17,17 +17,20 @@
   (set-macro-character #\[
     #'(lambda (stream char)
 	(declare (ignore char))
-	(list 'fn (list (intern "_")) (read-delimited-list #\] stream t)))))
+	(list 'fn (list (intern "_")) 
+	      (read-delimited-list #\] stream t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
 ;;;;   Handle package marker #\:
 
+#|
 ;; Version 1: Fragile hack...
 
 (defmacro w/no-colon-1 (&body body)
   (flet ((_colon (on?)
-	   `(setf (elt sb-impl::*constituent-trait-table* (char-code #\:))
+	   `(setf (elt sb-impl::*constituent-trait-table* 
+		       (char-code #\:))
 		  ,(if on? 
 		       'sb-impl::+char-attr-package-delimiter+
 		       'sb-impl::+char-attr-constituent+))))
@@ -37,6 +40,7 @@
 	 (unwind-protect (setf res (progn ,@body))
 	   ,(_colon t)
 	   res)))))
+|#
 
 ;; Version 2: Gray streams...
 
@@ -59,7 +63,8 @@
       (prog1 (%char s) (setf (esc? s) nil))
       (let ((c (read-char (%stream s) nil :eof)))
 	(cond ((eql c :eof) :eof)
-	      ((char= c (%char s)) (prog1 #\\ (setf (esc? s) t)))
+	      ((char= c (%char s)) 
+	       (prog1 #\\ (setf (esc? s) t)))
 	      (t c)))))
 
 (defmethod stream-unread-char ((s esc-stream) char)

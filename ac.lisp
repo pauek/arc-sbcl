@@ -20,7 +20,10 @@
     `(fn (,@nrm ,@(mapcar #'_opt opt) . ,(car rest)) ,@body))))
 
 (defgeneric wset (wkr pairs)
-  (:method (wkr pairs) `(set ,@pairs)))
+  (:method (wkr pairs) 
+    (flet ((_2list (p)
+	     (list (car p) (cdr p))))
+      `(set ,@(mapcan #'_2list pairs)))))
 
 (defgeneric wfuncall (wkr head rest)
   (:method (wkr head rest)
@@ -107,6 +110,7 @@
   (_pass sb-impl::backq-list)
   (_pass sb-impl::backq-list*)
   (_pass sb-impl::backq-cons)
+  (_pass sb-impl::backq-comma)
   (_pass sb-impl::backq-append))
 
 
@@ -133,7 +137,7 @@
 
 (defwalker c (arc))
 
-(defwalk arc atom (x)
+(defwalk c atom (x)
   (flet ((_literal? (a)
 	   (or (null a) (eq a t)
 	       (numberp a)
@@ -174,13 +178,20 @@
 	  (t 
 	   `($apply ,head (list ,@rest))))))
 
+(defwalker mac+c (arc)
+  (wmac (new-walker 'mac))
+  (wc   (new-walker 'c)))
+
+(defmethod wform ((w mac+c) form)
+  (wform (wc w) (wform (wmac w) form)))
+
 ;;; arcme & arcc & arcev
 
 (defun arcmac (form)
   (walk 'mac form))
 
 (defun arcc (form)
-  (walk 'c form))
+  (walk 'c (arcmac form)))
 
 (defun arcev (form)
   (flet ((_ign-warn (condition)

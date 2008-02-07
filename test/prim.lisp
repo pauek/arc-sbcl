@@ -67,5 +67,9 @@
 
 (deftest t-rep
   (chkev 5    "(rep 5)")
+  (chkev #\a  "(rep #\\a)")
+  (chkev 'a   "(rep 'a)")
+  (chkev 1.6  "(rep 1.6)")
+  (chkev "hi" "(rep \"hi\")")
   (chkev 1001 "(rep (annotate 'pk 1001))"))
 

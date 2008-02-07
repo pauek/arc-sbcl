@@ -25,11 +25,15 @@
   (chkev "hi, ho, ho" "(+ \"hi\" \", ho\" \", ho\")")
   (chkev '(1 2 3 4)   "(+ '(1 2) '(3 4))"))
 
-
-
-
-
-
-
-
-    
+(deftest t-compare
+  (chkev t   "(< 0 1 2)")
+  (chkev nil "(< 1 0 2)")
+  (chkev t   "(< -5 0 5)")
+  (chkev nil "(< 0 1 2 3 4 5 4)")
+  (chkev t   "(< #\\a #\\z)")
+  (chkev nil "(< #\\b #\\a)")
+  (chkev t   "(< \"hi\" \"ho\")")
+  (chkev t   "(< \"hi\" \"ho\" \"hu\")")
+  (chkev nil "(< \"aaz\" \"aaa\"")
+  (chkev t   "(< 'a 'b 'c 'd)")
+  (chkev nil "(< 'a 'b 't 's)"))

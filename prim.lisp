@@ -52,6 +52,32 @@
 	 (apply #'append args))
 	(t (apply #'+ args))))
 
+(defun pairwise (pred args &optional base)
+  (let ((n (length args)))
+    (cond ((< n 2) base)
+	  ((= n 2) (apply pred args))
+	  (t (and (funcall pred (car args) (cadr args))
+		  (pairwise pred (cdr args) base))))))
+
+(macrolet ((_compare (sym)
+	     (flet ((_cmp (str)
+		      (intern (format nil "~a~a" str sym))))
+	       `(defprim ,sym (&rest args)
+		  (cond ((every #'numberp args)
+			 (apply #',sym args))
+			((every #'stringp args)
+			 (not (null (pairwise #',(_cmp "STRING") args))))
+			((every #'characterp args)
+			 (pairwise #',(_cmp "CHAR") args))
+			((every #'symbolp args)
+			 (not (null (pairwise #',(_cmp "STRING") 
+					      (mapcar #'symbol-name args)))))
+			(t (apply #',sym args)))))))
+  (_compare <)
+  (_compare >))
+
+;; cons, car, cdr...
+
 (defprim cons (a b)
   (cons a b))
 

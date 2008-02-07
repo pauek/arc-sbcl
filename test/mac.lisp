@@ -26,4 +26,4 @@
     (chkmac '(fn ((o x 5)) (+ x 1)) "(fn ((o x (z))) (+ x 1))")
     (chkmac '(fn ((o x -1)) (+ x 5)) "(fn ((o x -1)) (+ x 5))")
     (chkmac '(fn ((o i (oh! 1 2))) i) "(fn ((o i (o 1 2))) i)")
-    (chkmac '(progn a b) "(do a b)")))
+    (chkmac '(fn (a b) (progn a b)) "(fn (a b) (do a b))")))

@@ -27,14 +27,14 @@
 
 (defvar *env* nil)
 
+(defun env? (x)
+  (member x *env*))
+
 (defwalker arc)
 
 (defwalk arc list (head rest)
   (let ((wrest (mapcar #'walk rest)))
-    (cond ((symbolp head)
-	   (wfuncall (wkr) `(%symval ',head) rest))
-	  (t 
-	   (wfuncall (wkr) (walk head) wrest)))))
+    (wfuncall (wkr) (walk head) wrest)))
 
 (defwalk/sp arc quote (rest) 
   `(quote ,@rest))
@@ -57,8 +57,8 @@
 	       (cond (o? (unless (eq (car a) 'o) (_err))
 			 (push (cadr a) syms)
 			 (cond ((cddr a)
-				(push (list (cadr a) 
-					    (walk (caddr a))) 
+				(push (list (cadr a)
+					    (walk (caddr a)))
 				      opt))
 			       (t (push (cadr a) opt))))
 		     (t (push a nrm)
@@ -77,6 +77,7 @@
 	     (_args (a) 
 	       (cond ((null a) nil)
 		     ((symbolp a) 
+		      (push a syms)
 		      (push a rest))
 		     ((consp a) (_argl nil a))
 		     (t (_err)))))
@@ -123,6 +124,16 @@
 
 (defwalker c (arc))
 
+(defwalk arc atom (x)
+  (flet ((_literal? (a)
+	   (or (null a) (eq a t)
+	       (numberp a)
+	       (stringp a)
+	       (characterp a))))
+    (cond ((_literal? x) x)
+	  ((env? x) x)
+	  (t `(%symval ',x)))))
+
 (defmethod wif ((wkr c) rest)
   (labels ((_if (args)
 	     (cond ((null args) nil)
@@ -141,7 +152,7 @@
 
 (defmethod wset ((wkr c) pairs)
   (labels ((_pair (place val)
-	     (if (member place *env*)
+	     (if (env? place)
 		 `(setf ,place ,val)
 		 `(setf ,(%sym place) ,val)))
 	   (_pairs (args)
@@ -152,7 +163,11 @@
     `(progn ,@(_pairs pairs))))
 
 (defmethod wfuncall ((wkr c) head rest)
-  `(funcall ,head ,@rest))
+  (let ((len (length rest)))
+    (cond ((<= 0 len 4) 
+	   `(,(%sym (format nil "FUNCALL~a" len)) ,head ,@rest))
+	  (t 
+	   `(@apply ,head (list ,@rest))))))
 
 ;;; arcme & arcc & arcev
 
@@ -173,6 +188,24 @@
        (defun ,_name ,args ,@body)
        (defparameter ,_name #',_name))))
 
+(macrolet ((_ (name &rest args)
+	     `(defprim ,name (fn ,@args)
+		(if (functionp fn)
+		    (funcall fn ,@args)
+		    (@apply fn (list ,@args))))))
+  (_ funcall0)
+  (_ funcall1 a1)
+  (_ funcall2 a1 a2)
+  (_ funcall3 a1 a2 a3)
+  (_ funcall4 a1 a2 a3 a4))
+
+(defprim apply (fn args)
+  (cond ((functionp fn) (apply fn args))
+	((consp fn) (nth (car args) fn))
+	((stringp fn) (char fn (car args)))
+	((hash-table-p fn) (gethash (car args) fn))
+	(t (error "Call to inappropriate object"))))
+
 (macrolet ((_arith (op)
 	     `(defprim ,op (&rest args)
 		(apply #',op args))))
@@ -187,3 +220,4 @@
 
 (defprim cons (a b)
   (cons a b))
+

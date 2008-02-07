@@ -77,6 +77,20 @@
   (chkev '(1 . 2) "([cons _ 2] 1)")
   (chkev "hi, ho" "([+ _ \", ho\"] \"hi\")"))
 
+(deftest t-index 
+  (chkev #\h  "(\"hiho\" 0)")
+  (chkev #\i  "(\"hiho\" 1)")
+  (chkev #\h  "(\"hiho\" 2)")
+  (chkev #\o  "(\"hiho\" 3)")
+  (chkerr "(\"hiho\" 4)")
+  (chkev 1 "('(1 2 3) 0)")
+  (chkev 2 "('(1 2 3) 1)")
+  (chkev 3 "('(1 2 3) 2)")
+  (chkerr "('(1 2 3) 3)")
+  ;; tables 
+  )
+  
+
 
 ; TODO: t-coerce
 

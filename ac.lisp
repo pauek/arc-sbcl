@@ -40,9 +40,17 @@
   `(quote ,@rest))
 
 (defwalk/sp arc set (rest)
-  (unless (= 0 (mod (length rest) 2))
-    (error "Odd number of arguments to set"))
-  (wset (wkr) (mapcar #'walk rest)))
+  (labels ((_pairs (lst)
+	     (cond ((null lst) nil)
+		   ((not (symbolp (car lst)))
+		    (error "First argument to set must be a symbol [~a]" 
+			   (car lst)))
+		   ((consp (cdr lst))
+		    (cons (cons (car lst) (walk (cadr lst)))
+			  (_pairs (cddr lst))))
+		   (t 
+		    (error "Odd number of arguments to set")))))
+    (wset (wkr) (_pairs rest))))
 
 (defwalk/sp arc if (rest) 
   (wif (wkr) (mapcar #'walk rest)))
@@ -151,16 +159,12 @@
      ,@body))
 
 (defmethod wset ((wkr c) pairs)
-  (labels ((_pair (place val)
-	     (if (env? place)
-		 `(setf ,place ,val)
-		 `(setf ,(%sym place) ,val)))
-	   (_pairs (args)
-	     (cond ((null args) nil)
-		   ((consp (cdr args)) 
-		    (cons (_pair (car args) (cadr args))
-			  (_pairs (cddr args)))))))
-    `(progn ,@(_pairs pairs))))
+  (labels ((_pair (p)
+	     (destructuring-bind (place . val) p
+	       (if (env? place)
+		   `(setf ,place ,val)
+		   `(setf ,(%sym place) ,val)))))
+    `(progn ,@(mapcar #'_pair pairs))))
 
 (defmethod wfuncall ((wkr c) head rest)
   (let ((len (length rest)))

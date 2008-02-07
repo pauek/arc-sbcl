@@ -35,10 +35,14 @@
   (chkev 2 "('(1 2 3) 1)")
   (chkev 3 "('(1 2 3) 2)"))
 
+(defparameter arc::$x nil) ; Avoid SBCL warning
+
 (deftest t-env
   (chkerr "(set x)")
   (chkerr "(set x 1 y)")
   (chkerr "(set x 1 y 2 z)")
+  (chkerr "(set #\a 1)")
+  (chkerr "(set \"h\" 'a)")
   (chkev 5 "((fn () (set x 5) x))")
   (chkev #\a "((fn (x) (set x #\\a) x) #\\z)")
   (chkev 1   "((fn ((o x)) (set x 1) x))")

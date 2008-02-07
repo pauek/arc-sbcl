@@ -1,6 +1,6 @@
 
 (defpackage :arc
-  (:use :cl :sb-gray :pk-walk)
+  (:use :cl :sb-gray :sb-bsd-sockets :pk-walk)
   (:export :arcmac
 	   :arcc
 	   :arcev

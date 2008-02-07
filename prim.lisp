@@ -34,6 +34,27 @@
 	((hash-table-p fn) (gethash (car args) fn))
 	(t (error "Call to inappropriate object"))))
 
+;; cons, car, cdr...
+
+(defprim cons (a b)
+  (cons a b))
+
+(defprim car (x)
+  (cond ((null x) nil)
+	((consp x) (car x))
+	(t (error "Error can't take car of ~a" x))))
+
+(defprim cdr (x)
+  (cond ((null x) nil)
+	((consp x) (cdr x))
+	(t (error "Error can't take cdr of ~a" x))))
+
+(defprim err (msg &rest args)
+  (let ((msg (format nil "~a~{~a~^ ~}" msg args)))
+    (error msg)))
+
+;; Arithmetic
+
 (macrolet ((_arith (op)
 	     `(defprim ,op (&rest args)
 		(apply #',op args))))
@@ -80,17 +101,19 @@
   (cond ((hash-table-p x) (hash-table-count x))
 	(t (length x))))
 
+;; Types
+
 (defprim type (x)
-  (cond ((%tagged? x)     (%type x))
-	((consp x)        'cons)
-	((symbolp x)      'sym) ; + null
-	((functionp x)    'fn)
-	((characterp x)   'char)
-	((stringp x)      'string)
-	((integerp x)     'int)
-	((numberp x)      'num)
-	((hash-table-p x) 'table)
-	((input-stream-p x) 'input)
+  (cond ((%tagged? x)        (%type x))
+	((consp x)           'cons)
+	((symbolp x)         'sym) ; + null
+	((functionp x)       'fn)
+	((characterp x)      'char)
+	((stringp x)         'string)
+	((integerp x)        'int)
+	((numberp x)         'num)
+	((hash-table-p x)    'table)
+	((input-stream-p x)  'input)
 	((output-stream-p x) 'output)
 	;; ((tcp-listener? x) 'socket)
 	((typep x 'error) 'exception)
@@ -105,22 +128,138 @@
 (defprim table ()
   (make-hash-table))
 
-;; cons, car, cdr...
+(defprim uniq ()
+  (gensym "$"))
 
-(defprim cons (a b)
-  (cons a b))
+;; call-with-current-continuation
 
-(defprim car (x)
-  (cond ((null x) nil)
-	((consp x) (car x))
-	(t (error "Error can't take car of ~a" x))))
+(defun %ccc (k)
+  (declare (ignore k))
+  (error "CCC Not implemented"))
 
-(defprim cdr (x)
-  (cond ((null x) nil)
-	((consp x) (cdr x))
-	(t (error "Error can't take cdr of ~a" x))))
+(defprim ccc (proc)
+  (%ccc proc))
 
-(defprim err (msg &rest args)
-  (let ((msg (format nil "~a~{~a~^ ~}" msg args)))
-    (error msg)))
+(defprim infile (file)
+  (open file :direction :input))
 
+(defprim outfile (file &rest args)
+  (open file 
+	:direction :output 
+	:if-exists (if (equal args '(append))
+		       :append
+		       :overwrite)))
+
+(defprim instring (str)
+  (make-string-input-stream str))
+
+(defprim outstring ()
+  (make-string-output-stream))
+
+(defprim inside (output)
+  (get-output-stream-string output))
+
+(defprim close (p)
+  (cond ((input-stream-p p) (close p))
+	((output-stream-p p) (close p))
+	((typep p 'socket) (sb-bsd-sockets:socket-close p))
+	(t (error "Can't close ~a" p)))
+  nil)
+
+(defparameter $stdout *standard-output*)
+(defparameter $stdin  *standard-input*)
+(defparameter $stderr *error-output*)
+
+(defprim call-w/stdout (port thunk)
+  (let ((*standard-output* port)) (funcall thunk)))
+
+(defprim call-w/stdin (port thunk)
+  (let ((*standard-input* port)) (funcall thunk)))
+
+(macrolet ((_f (name fn)
+	     `(defprim ,name (stream)
+		(let ((s (if stream
+			     *standard-input*
+			     stream)))
+		  (,fn s nil nil)))))
+  (_f readc read-char)
+  (_f readb read-byte)
+  (_f peekc peek-char))
+
+(macrolet ((_port (args)
+	     `(if (consp ,args) 
+		  (car ,args) 
+		  *standard-output*))
+	   (_wr1 (name prm fn)
+	     `(defprim ,name (,prm &rest args)
+		(,fn ,prm (_port args))
+		,prm))
+	   (_wr2 (name)
+	     `(defprim ,name (&rest args)
+		(when (consp args)
+		  (write (car args) 
+			 :stream (_port (cdr args))))
+		(force-output)
+		nil)))
+  (_wr1 writec c write-char)
+  (_wr1 writeb b write-byte)
+  (_wr2 write)
+  (_wr2 disp))
+
+(defprim sread (p eof)
+  (read p nil eof))
+
+(defun char->ascii (c)
+  (char-code c))
+
+(defun ascii->char (c)
+  (code-char c))
+
+(defun number->string (n &optional (radix 10) precision)
+  (declare (ignore precision)) ;; will polish later...
+  (format nil (format nil "~~~DR" radix) n))
+
+(defun string->number (str &optional (radix 10))
+  (parse-integer str :radix radix))
+
+(defprim coerce (x type &rest args)
+  (flet ((_err () (error "Can't coerce ~a ~a" x type)))
+    (cond ((%tagged? x) 
+	   (error "Can't coerce annotated object [~a]" x))
+	  ((eql type (%type x)) x)
+	  ((characterp x) 
+	   (case type
+	     (int    (char->ascii x))
+	     (string (string x))
+	     (sym    (intern (string x)))
+	     (t      (_err))))
+	  ((integerp x)
+	   (case type
+	     (char   (ascii->char x))
+	     (string (apply #'number->string x args))
+	     (t      (_err))))
+	  ((numberp x)
+	   (case type
+	     (int    (round x))
+	     (char   (ascii->char (round x)))
+	     (string (apply #'number->string x args))
+	     (t      (_err))))
+	  ((stringp x)
+	   (case type 
+	     (sym    (intern x))
+	     (cons   (map 'list #'identity x))
+	     (int    (or (apply #'string->number x args)))
+	     (t      (_err))))
+	  ((consp x)
+	   (case type
+	     (string (map 'list #'identity x))
+	     (t      (_err))))
+	  ((null x)
+	   (case type
+	     (string "")
+	     (t      (_err))))
+	  ((symbolp x)
+	   (case type
+	     (string (symbol-name x))
+	     (t      (_err))))
+	  (t         x))))

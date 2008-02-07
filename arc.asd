@@ -10,7 +10,7 @@
    (:file "prim"))
   :serial t
 
-  :depends-on (:pk-walk)
+  :depends-on (:pk-walk :sb-bsd-sockets)
 
   :perform
   (test-op :after (op c)

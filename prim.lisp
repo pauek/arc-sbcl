@@ -49,6 +49,19 @@
 	((consp x) (cdr x))
 	(t (error "Error can't take cdr of ~a" x))))
 
+(defprim scar (x val)
+  (if (stringp x) 
+      (setf (char x 0) val)
+      (setf (car x) val))
+  val)
+
+(defprim scdr (x val)
+  (if (stringp x)
+      (error "Can't set cdr of a string [~a]" x)
+      (setf (cdr x) val))
+  val)
+
+
 (defprim err (msg &rest args)
   (let ((msg (format nil "~a~{~a~^ ~}" msg args)))
     (error msg)))
@@ -80,22 +93,29 @@
 	  (t (and (funcall pred (car args) (cadr args))
 		  (pairwise pred (cdr args) base))))))
 
-(macrolet ((_compare (sym)
-	     (flet ((_cmp (str)
-		      (intern (format nil "~a~a" str sym))))
-	       `(defprim ,sym (&rest args)
-		  (cond ((every #'numberp args)
-			 (apply #',sym args))
-			((every #'stringp args)
-			 (not (null (pairwise #',(_cmp "STRING") args))))
-			((every #'characterp args)
-			 (pairwise #',(_cmp "CHAR") args))
-			((every #'symbolp args)
-			 (not (null (pairwise #',(_cmp "STRING") 
-					      (mapcar #'symbol-name args)))))
-			(t (apply #',sym args)))))))
+(macrolet 
+    ((_compare (sym)
+       (flet ((_cmp (str)
+		(intern (format nil "~a~a" str sym))))
+	 `(defprim ,sym (&rest args)
+	    (cond ((every #'numberp args)
+		   (apply #',sym args))
+		  ((every #'stringp args)
+		   (not (null (pairwise #',(_cmp "STRING") args))))
+		  ((every #'characterp args)
+		   (pairwise #',(_cmp "CHAR") args))
+		  ((every #'symbolp args)
+		   (not (null (pairwise #',(_cmp "STRING") 
+					(mapcar #'symbol-name args)))))
+		  (t (apply #',sym args)))))))
   (_compare <)
   (_compare >))
+
+(defprim is (&rest args)
+  (or (every #'(lambda (x) (eql (car args) x)) (cdr args))
+      (and (every #'stringp args)
+	   (every #'(lambda (x) (string= (car args) x)) (cdr args)))
+      (every #'null args)))
 
 (defprim len (x)
   (cond ((hash-table-p x) (hash-table-count x))
@@ -125,8 +145,20 @@
 (defprim rep (x)
   (if (%tagged? x) (%rep x) x))
 
+;; Tables
+
 (defprim table ()
-  (make-hash-table))
+  (make-hash-table :test #'equal))
+
+(defprim maptable (fn table)
+  (maphash fn table))
+
+;; Strings
+
+(defprim newstring (n ch)
+  (make-string n :initial-element ch))
+
+;; Gensyms
 
 (defprim uniq ()
   (gensym "$"))
@@ -139,6 +171,8 @@
 
 (defprim ccc (proc)
   (%ccc proc))
+
+;; Input/output
 
 (defprim infile (file)
   (open file :direction :input))
@@ -209,6 +243,8 @@
 (defprim sread (p eof)
   (read p nil eof))
 
+;; Coerce
+
 (defprim coerce (x type &rest args)
   (flet ((_err () 
 	   (error "Can't coerce ~a ~a" x type))
@@ -257,3 +293,100 @@
 	     (t      (_err))))
 	  (t         x))))
 
+;; Sref
+
+(defprim sref (com val ind) ; later make ind rest arg
+  (cond ((hash-table-p com)  
+	 (if (null val)
+	     (remhash ind com)
+	     (setf (gethash ind com) val)))
+	((stringp com) 
+	 (setf (char com ind) val))
+	((consp com)   
+	 (setf (nth ind com) val))
+	(t (error "Can't set reference [~a ~a ~a]" com ind val)))
+  val)
+
+
+;; Threads
+
+;; Sockets
+
+(defprim open-socket (num)
+  (let ((sk (make-instance 'inet-socket :type :stream :protocol :tcp)))
+    (setf (sockopt-reuse-address sk) t)
+    (socket-bind sk #(0 0 0 0) num) ;; 0.0.0.0 ????
+    (sb-bsd-sockets:socket-listen sk 15) ;; from Araneida... 15?
+    sk))
+
+; socket-accept
+
+;; System
+
+(defprim sleep (n)
+  (sleep n)
+  nil)
+
+(defprim system (cmd)
+  (process-wait 
+   (run-program "/bin/sh" (list "-c" cmd))) ; dirty trick for PATH
+  nil)
+
+(defprim pipe-from (cmd)
+  (let ((p (run-program "/bin/sh" (list "-c" cmd))))
+    (process-output p)))
+
+(defprim protect (during after)
+  (unwind-protect (funcall during)
+    (funcall after)))
+
+(defprim rand (n)
+  (random n))
+
+(defprim quit ()
+  (sb-ext:quit))
+
+;dir
+;file-exists
+;dir-exists
+;rmfile
+
+;; Arc
+
+(defprim eval (e)
+  (eval (arcc e)))
+
+(defprim on-err (errfn f)
+  (handler-case (funcall f)
+    (error (e) (funcall errfn e))))
+
+(defprim macex (e)
+  (arcmac e))
+
+;; (mxdef macex1 (e)
+;;   (ac-macex e 'once))
+
+(defun repl ()
+  (flet ((_repl ()
+	   (loop 
+	      (princ "arc> ")
+	      (let ((expr (read)))
+		(if (eql expr :a)
+		    (return 'done)
+		    (let ((val (arcev expr)))
+		      (write val)
+		      (set '_that val)
+		      (set '_thatexpr expr)
+		      (terpri)))))))
+    (format t "Use (quit) to quit, (tl) to return here after an interrupt.~%")
+    (loop
+       (handler-case (_repl)
+	 (error (e) (format t "Error: ~a~%" e))))))
+
+(defun aload (file)
+  (with-open-file (_s file) 
+    (w/no-colon (s _s)
+      (loop for x = (read s nil t)
+	 while x
+	 do (arcev x))
+      t)))

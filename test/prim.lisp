@@ -95,3 +95,16 @@
   (chkev ""     "(coerce nil 'string)")
   (chkev "SYMB" "(coerce 'symb 'string)"))
    
+(deftest t-sref
+  (chkev "cello" "((fn ((o x)) 
+                     (set x \"hello\")
+                     (sref x #\\c 0)
+                     x))")
+  (chkev '(1 100 3 4) "((fn ((o x)) 
+                         (set x '(1 2 3 4))
+                         (sref x 100 1)
+                         x))")
+  (chkev "ho" "((fn ((o x)) 
+                 (set x (table))
+                 (sref x \"ho\" \"hi\")
+                 (x \"hi\")))"))

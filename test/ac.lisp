@@ -11,22 +11,6 @@
   (chkev 'a         "(quote a)")
   (chkev '(1 2 3)   "(quote (1 2 3))"))
 
-(deftest t-arith-int
-  (chkev  3 "(+ 1 2)")
-  (chkev  6 "(* 2 3)")
-  (chkev  4 "(/ 12 3)")
-  (chkev  1 "(- 2 1)")
-  (chkev  0 "(+)")
-  (chkev  1 "(*)")
-  (chkev -1 "(- 1)")
-  (chkev  1 "(+ 1)")
-  (chkev 15 "(+ (+ 1 2) (+ 3 (+ 4 5)))")
-  (chkev 10 "(+ 1 1 1 1 1 1 1 1 1 1)"))
-
-(deftest t-plus
-  (chkev  "hi"         "(+ \"h\" \"i\")")
-  (chkev  "hi, ho, ho" "(+ \"hi\" \", ho\" \", ho\")"))
-
 (deftest t-funcalls
   (chkev -1           "((fn () -1))")
   (chkev 3            "((fn (x) (+ 1 x)) 2)")
@@ -40,6 +24,16 @@
   (chkev "zz"         "((fn ((o a)) \"zz\"))")
   (chkev 10           "((fn (x y (o z 1)) (* z (+ x y))) 5 5)")
   (chkev 20           "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)"))
+
+(deftest t-index 
+  (chkev #\h  "(\"hiho\" 0)")
+  (chkev #\i  "(\"hiho\" 1)")
+  (chkev #\h  "(\"hiho\" 2)")
+  (chkev #\o  "(\"hiho\" 3)")
+  (chkerr "(\"hiho\" 4)")
+  (chkev 1 "('(1 2 3) 0)")
+  (chkev 2 "('(1 2 3) 1)")
+  (chkev 3 "('(1 2 3) 2)"))
 
 (deftest t-env
   (chkerr "(set x)")
@@ -76,15 +70,9 @@
   (chkev '(1 . 2) "([cons _ 2] 1)")
   (chkev "hi, ho" "([+ _ \", ho\"] \"hi\")"))
 
-(deftest t-index 
-  (chkev #\h  "(\"hiho\" 0)")
-  (chkev #\i  "(\"hiho\" 1)")
-  (chkev #\h  "(\"hiho\" 2)")
-  (chkev #\o  "(\"hiho\" 3)")
-  (chkerr "(\"hiho\" 4)")
-  (chkev 1 "('(1 2 3) 0)")
-  (chkev 2 "('(1 2 3) 1)")
-  (chkev 3 "('(1 2 3) 2)"))
+(deftest t-error
+  (chkerr "(err \"This is an error\")"))
+
   ;; (chkerr "('(1 2 3) 3)") ; In mzscheme this is an error
 
 ; TODO: t-coerce

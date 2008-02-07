@@ -252,7 +252,7 @@
 	     (t      (_err))))
 	  ((consp x)
 	   (case type
-	     (string (map 'list #'identity x))
+	     (string (map 'string #'identity x))
 	     (t      (_err))))
 	  ((null x)
 	   (case type

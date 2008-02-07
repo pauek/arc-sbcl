@@ -80,13 +80,24 @@
   (chkev "a"   "(coerce #\\a 'string)")
   (chkev '|a|  "(coerce #\\a 'sym)")
   (chkev 'a    "(coerce #\\A 'sym)")
-  (chkerr "(coerve #\\a 'num)")
-  (chkerr "(coerve #\\a 'output)")
+  (chkerr "(coerce #\\a 'num)")
+  (chkerr "(coerce #\\a 'output)")
   ;;
   (chkev #\b   "(coerce 98 'char)")
   (chkev "351" "(coerce 351 'string)")
   ;;
   (chkev 5      "(coerce 5.1  'int)")
   (chkev #\C    "(coerce 67.2 'char)")
-  (chkev "56.1" "(coerce 56.1 'string)"))
+  (chkev "56.1" "(coerce 56.1 'string)")
+  ;;
+  (chkev 'abc   "(coerce \"ABC\" 'sym)")
+  (chkev '(#\a #\b #\c)
+	 "(coerce \"abc\" 'cons)")
+  (chkev 123    "(coerce \"123\" 'int)")
+  ;;
+  (chkev "jkl"  "(coerce '(#\\j #\\k #\\l) 'string)")
+  ;;
+  (chkev ""     "(coerce nil 'string)")
+  ;;
+  (chkev "SYMB" "(coerce 'symb 'string)"))
    

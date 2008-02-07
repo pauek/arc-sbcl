@@ -96,7 +96,14 @@
 	((typep x 'error) 'exception)
 	(t (error "Type: unknown type ~a" x))))
 	
-	
+(defprim annotate (typ x)
+  (%mk-tagged typ x))
+
+(defprim rep (x)
+  (if (%tagged? x) (%rep x) x))
+
+(defprim table ()
+  (make-hash-table))
 
 ;; cons, car, cdr...
 

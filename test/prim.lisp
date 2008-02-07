@@ -63,6 +63,9 @@
   ;; output
   ;; socket
   ;; exception
-  )
+  (chkev 'pk     "(type (annotate 'pk 1001))"))
 
+(deftest t-rep
+  (chkev 5    "(rep 5)")
+  (chkev 1001 "(rep (annotate 'pk 1001))"))
 

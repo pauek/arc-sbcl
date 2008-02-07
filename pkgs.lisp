@@ -10,4 +10,5 @@
 	   :int
 	   :num
 	   :sym
+	   :table
 	   :arcsym))

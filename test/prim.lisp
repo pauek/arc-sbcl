@@ -74,3 +74,19 @@
   (chkev 1.6  "(rep 1.6)")
   (chkev "hi" "(rep \"hi\")")
   (chkev 1001 "(rep (annotate 'pk 1001))"))
+
+(deftest t-coerce 
+  (chkev 65    "(coerce #\\A 'int)")
+  (chkev "a"   "(coerce #\\a 'string)")
+  (chkev '|a|  "(coerce #\\a 'sym)")
+  (chkev 'a    "(coerce #\\A 'sym)")
+  (chkerr "(coerve #\\a 'num)")
+  (chkerr "(coerve #\\a 'output)")
+  ;;
+  (chkev #\b   "(coerce 98 'char)")
+  (chkev "351" "(coerce 351 'string)")
+  ;;
+  (chkev 5      "(coerce 5.1  'int)")
+  (chkev #\C    "(coerce 67.2 'char)")
+  (chkev "56.1" "(coerce 56.1 'string)"))
+   

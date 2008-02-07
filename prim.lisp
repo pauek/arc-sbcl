@@ -226,7 +226,7 @@
   (flet ((_err () (error "Can't coerce ~a ~a" x type)))
     (cond ((%tagged? x) 
 	   (error "Can't coerce annotated object [~a]" x))
-	  ((eql type (%type x)) x)
+	  ((eql type ($type x)) x)
 	  ((characterp x) 
 	   (case type
 	     (int    (char->ascii x))
@@ -263,3 +263,4 @@
 	     (string (symbol-name x))
 	     (t      (_err))))
 	  (t         x))))
+

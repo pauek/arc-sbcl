@@ -13,7 +13,7 @@
 ;; Symbols
 
 (defun %sym (sym)
-  (intern (format nil "@~a" sym)
+  (intern (format nil "$~a" sym)
 	  (find-package :arc)))
 
 (defun arcsym (s) (%sym s))

@@ -11,7 +11,6 @@
   (chkev 'a         "(quote a)")
   (chkev '(1 2 3)   "(quote (1 2 3))"))
 
-
 (deftest t-arith-int
   (chkev  3 "(+ 1 2)")
   (chkev  6 "(* 2 3)")
@@ -85,12 +84,8 @@
   (chkerr "(\"hiho\" 4)")
   (chkev 1 "('(1 2 3) 0)")
   (chkev 2 "('(1 2 3) 1)")
-  (chkev 3 "('(1 2 3) 2)")
-  (chkerr "('(1 2 3) 3)")
-  ;; tables 
-  )
-  
-
+  (chkev 3 "('(1 2 3) 2)"))
+  ;; (chkerr "('(1 2 3) 3)") ; In mzscheme this is an error
 
 ; TODO: t-coerce
 

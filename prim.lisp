@@ -209,46 +209,39 @@
 (defprim sread (p eof)
   (read p nil eof))
 
-(defun char->ascii (c)
-  (char-code c))
-
-(defun ascii->char (c)
-  (code-char c))
-
-(defun number->string (n &optional (radix 10) precision)
-  (declare (ignore precision)) ;; will polish later...
-  (format nil (format nil "~~~DR" radix) n))
-
-(defun string->number (str &optional (radix 10))
-  (parse-integer str :radix radix))
-
 (defprim coerce (x type &rest args)
-  (flet ((_err () (error "Can't coerce ~a ~a" x type)))
+  (flet ((_err () 
+	   (error "Can't coerce ~a ~a" x type))
+	 (_num->str (n &optional (radix 10) precision)
+	   (declare (ignore precision))
+	   (format nil (format nil "~~~DR" radix) n))
+	 (_str->num (str &optional (radix 10))
+	   (parse-integer str :radix radix)))
     (cond ((%tagged? x) 
 	   (error "Can't coerce annotated object [~a]" x))
 	  ((eql type ($type x)) x)
 	  ((characterp x) 
 	   (case type
-	     (int    (char->ascii x))
+	     (int    (char-code x))
 	     (string (string x))
 	     (sym    (intern (string x)))
 	     (t      (_err))))
 	  ((integerp x)
 	   (case type
-	     (char   (ascii->char x))
-	     (string (apply #'number->string x args))
+	     (char   (code-char x))
+	     (string (apply #'_num->str x args))
 	     (t      (_err))))
 	  ((numberp x)
 	   (case type
 	     (int    (round x))
-	     (char   (ascii->char (round x)))
-	     (string (apply #'number->string x args))
+	     (char   (code-char (round x)))
+	     (string (apply #'_num->str x args))
 	     (t      (_err))))
 	  ((stringp x)
 	   (case type 
 	     (sym    (intern x))
 	     (cons   (map 'list #'identity x))
-	     (int    (or (apply #'string->number x args)))
+	     (int    (or (apply #'_str->num x args)))
 	     (t      (_err))))
 	  ((consp x)
 	   (case type

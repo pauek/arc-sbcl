@@ -32,7 +32,7 @@
 	((consp fn) (nth (car args) fn))
 	((stringp fn) (char fn (car args)))
 	((hash-table-p fn) (gethash (car args) fn))
-	(t (error "Call to inappropriate object"))))
+	(t (error "Call to inappropriate object [~a]" fn))))
 
 ;; cons, car, cdr...
 

@@ -19,4 +19,5 @@
 	   :num
 	   :sym
 	   :table
-	   :arcsym))
+	   :arcsym
+	   :rmsym))

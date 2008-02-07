@@ -16,8 +16,9 @@
 (defgeneric wfn (wkr nrm opt rest syms body)
   (:method (wkr nrm opt rest syms body)
     (declare (ignore syms))
-    (flet ((_opt (a) `(o ,@a)))
-    `(fn (,@nrm ,@(mapcar #'_opt opt) . ,(car rest)) ,@body))))
+    (labels ((_mklist (x) (if (atom x) (list x) x))
+	     (_opt (a) `(o ,@(_mklist a))))
+      `(fn (,@nrm ,@(mapcar #'_opt opt) . ,(car rest)) ,@body))))
 
 (defgeneric wset (wkr pairs)
   (:method (wkr pairs) 
@@ -127,7 +128,7 @@
     (let ((m (_macro? head)))
       (if m
 	  (walk (apply m rest))
-	  (cons head (mapcar #'walk rest))))))
+	  (cons (walk head) (mapcar #'walk rest))))))
 
 ;;; Continuation passing style
 

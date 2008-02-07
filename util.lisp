@@ -18,6 +18,10 @@
 
 (defun arcsym (s) (%sym s))
 
+(defun rmsym (s) 
+  (unintern (%sym s) 
+	    (find-package :arc)))
+
 (defun %boundp (sym)
   (boundp (%sym sym)))
 

@@ -10,7 +10,7 @@
 				   #'(lambda ,(cadr m) 
 				       ,@(cddr m)))))
 	 (_off (m)
-	   `(unintern ',(arcsym (car m)))))
+	   `(setf (symbol-value ',(arcsym (car m))) nil)))
     `(progn
        ,@(mapcar #'_on macs)
        (prog1 (progn ,@body)
@@ -31,4 +31,4 @@
 
 (deftest m-nested
   (with-mac ((do (&rest b) `(progn ,@b)))
-    (chkev 5 "(do 1 (do 3 5))")))
+    (chkmac '(progn 1 (progn 3 5)) "(do 1 (do 3 5))")))

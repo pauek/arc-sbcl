@@ -7,65 +7,45 @@
 
 (in-package :arc)
 
-;;; Base arc walker (do I need this?)
+;;; Base arc walker
+
+(defgeneric wif (wkr rest)
+  (:method (wkr rest) `(if ,@rest)))
+
+(defgeneric wfn (wkr args syms body)
+  (:method (wkr args syms body)
+    (declare (ignore syms))
+    `(fn ,args ,@body)))
+
+(defgeneric wset (wkr rest)
+  (:method (wkr rest) `(set ,@rest)))
+
+(defgeneric wfuncall (wkr head rest)
+  (:method (wkr head rest)
+    `(,head ,@rest)))
+
+
+(defvar *env* nil)
 
 (defwalker arc)
+
+(defwalk arc list (head rest)
+  (let ((wrest (mapcar #'walk rest)))
+    (cond ((symbolp head)
+	   (wfuncall (wkr) `(%symval ',head) rest))
+	  (t 
+	   (wfuncall (wkr) (walk head) wrest)))))
 
 (defwalk/sp arc quote (rest) 
   `(quote ,@rest))
 
-;;; SBCL backquote
-(macrolet ((_pass (what)
-	     `(defwalk/sp arc ,what (rest)
-		`(,',what ,@(mapcar #'walk rest)))))
-  (_pass sb-impl::backq-list)
-  (_pass sb-impl::backq-list*)
-  (_pass sb-impl::backq-cons)
-  (_pass sb-impl::backq-append))
+(defwalk/sp arc set (rest) 
+  (wset (wkr) (mapcar #'walk rest)))
 
+(defwalk/sp arc if (rest) 
+  (wif (wkr) (mapcar #'walk rest)))
 
-;;; Macro expansion
-
-(defwalker mac (arc))
-
-(defwalk mac list (head rest)
-  (flet ((_macro? (x)
-	   (when (symbolp x)
-	     (let ((fn (%symval x)))
-	       (when (%tag? 'mac fn)
-		 (%rep fn))))))
-    (let ((m (_macro? head)))
-      (if m
-	  (walk (apply m rest))
-	  (cons head (mapcar #'walk rest))))))
-
-;;; Continuation passing style
-
-
-
-;;; Compilation
-
-(defwalker c (arc))
-
-(defvar *env* nil)
-
-(defwalk c list (head rest)
-  (let ((wrest (mapcar #'walk rest)))
-    (cond ((symbolp head)
-	   `(funcall (%symval ',head) ,@wrest))
-	  (t 
-	   `(funcall ,(walk head) ,@wrest)))))
-
-(defwalk/sp c if (rest)
-  (labels ((_if (args)
-	     (cond ((null args) nil)
-		   ((null (cdr args)) (walk (car args)))
-		   (t `(if ,(walk (car args))
-			   ,(walk (cadr args))
-			   ,(_if (cddr args)))))))
-    (_if rest)))
-
-(defwalk/sp c fn (rest)
+(defwalk/sp arc fn (rest)
   (let (syms)
     (labels ((_err ()
 	       (error "Error parsing lambda list"))
@@ -101,11 +81,57 @@
       (let ((args (_args (car rest)))
 	    (body (let ((*env* (append syms *env*)))
 		    (mapcar #'walk (cdr rest)))))
-	`(lambda ,args
-	   (declare (ignorable ,@syms)) ;; Avoid SBCL warning
-	   ,@body)))))
+	(wfn (wkr) args syms body)))))
 
-(defwalk/sp c set (rest)
+
+;;; SBCL backquote
+(macrolet ((_pass (what)
+	     `(defwalk/sp arc ,what (rest)
+		`(,',what ,@(mapcar #'walk rest)))))
+  (_pass sb-impl::backq-list)
+  (_pass sb-impl::backq-list*)
+  (_pass sb-impl::backq-cons)
+  (_pass sb-impl::backq-append))
+
+
+;;; Macro expansion
+
+(defwalker mac (arc))
+
+(defwalk mac list (head rest)
+  (flet ((_macro? (x)
+	   (when (symbolp x)
+	     (let ((fn (%symval x)))
+	       (when (%tag? 'mac fn)
+		 (%rep fn))))))
+    (let ((m (_macro? head)))
+      (if m
+	  (walk (apply m rest))
+	  (cons head (mapcar #'walk rest))))))
+
+;;; Continuation passing style
+
+
+
+;;; Compilation
+
+(defwalker c (arc))
+
+(defmethod wif ((wkr c) rest)
+  (labels ((_if (args)
+	     (cond ((null args) nil)
+		   ((null (cdr args)) (car args))
+		   (t `(if ,(car args)
+			   ,(cadr args)
+			   ,(_if (cddr args)))))))
+    (_if rest)))
+
+(defmethod wfn ((wkr c) args syms body)
+  `(lambda ,args
+     (declare (ignorable ,@syms)) ;; Avoid SBCL warning
+     ,@body))
+
+(defmethod wset ((wkr c) rest)
   (labels ((_pair (place val)
 	     (if (member place *env*)
 		 `(setf ,place ,val)
@@ -113,10 +139,13 @@
 	   (_pairs (args)
 	     (cond ((null args) nil)
 		   ((consp (cdr args)) 
-		    (cons (_pair (car args) (walk (cadr args)))
+		    (cons (_pair (car args) (cadr args))
 			  (_pairs (cddr args))))
 		   (t (error "Odd number of arguments to set")))))
     `(progn ,@(_pairs rest))))
+
+(defmethod wfuncall ((wkr c) head rest)
+  `(funcall ,head ,@rest))
 
 ;;; arcme & arcc & arcev
 

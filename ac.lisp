@@ -12,15 +12,11 @@
 (defgeneric wif (wkr rest)
   (:method (wkr rest) `(if ,@rest)))
 
-(defgeneric wfn (wkr arg-nrm arg-opt arg-rest syms body)
-  (:method (wkr arg-nrm arg-opt arg-rest syms body)
+(defgeneric wfn (wkr nrm opt rest syms body)
+  (:method (wkr nrm opt rest syms body)
     (declare (ignore syms))
     (flet ((_opt (a) `(o ,@a)))
-    `(fn (,@arg-nrm 
-	  ,@(mapcar #'_opt arg-opt)
-	  .
-	  ,(car arg-rest))
-	  ,@body))))
+    `(fn (,@nrm ,@(mapcar #'_opt opt) . ,(car rest)) ,@body))))
 
 (defgeneric wset (wkr rest)
   (:method (wkr rest) `(set ,@rest)))
@@ -134,10 +130,10 @@
 			   ,(_if (cddr args)))))))
     (_if rest)))
 
-(defmethod wfn ((wkr c) nrm arg-opt arg-rest syms body)
+(defmethod wfn ((wkr c) nrm opt rest syms body)
   `(lambda (,@nrm
-	    ,@(when arg-opt  `(&optional ,@arg-opt))
-	    ,@(when arg-rest `(&rest ,@arg-rest)))
+	    ,@(when opt  `(&optional ,@opt))
+	    ,@(when rest `(&rest ,@rest)))
      (declare (ignorable ,@syms)) ; Avoid SBCL warning
      ,@body))
 
@@ -190,4 +186,3 @@
 
 (defprim cons (a b)
   (cons a b))
-

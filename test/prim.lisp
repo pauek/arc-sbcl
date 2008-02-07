@@ -48,3 +48,21 @@
   ;; hash-tables
   )
 
+(deftest t-type
+  (chkev 'cons   "(type '(1))")
+  (chkev 'cons   "(type (cons 1 2))")
+  (chkev 'sym    "(type nil)")
+  (chkev 'sym    "(type 'a)")
+  (chkev 'fn     "(type +)")
+  (chkev 'char   "(type #\\a)")
+  (chkev 'string "(type \"hi\")")
+  (chkev 'int    "(type 1)")
+  (chkev 'num    "(type 1.4)")
+  (chkev 'table  "(type (table))")
+  ;; input
+  ;; output
+  ;; socket
+  ;; exception
+  )
+
+

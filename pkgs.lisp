@@ -7,4 +7,7 @@
 	   :w/no-colon
 	   :fn
 	   :o
+	   :int
+	   :num
+	   :sym
 	   :arcsym))

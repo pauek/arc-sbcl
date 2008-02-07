@@ -80,6 +80,24 @@
   (cond ((hash-table-p x) (hash-table-count x))
 	(t (length x))))
 
+(defprim type (x)
+  (cond ((%tagged? x)     (%type x))
+	((consp x)        'cons)
+	((symbolp x)      'sym) ; + null
+	((functionp x)    'fn)
+	((characterp x)   'char)
+	((stringp x)      'string)
+	((integerp x)     'int)
+	((numberp x)      'num)
+	((hash-table-p x) 'table)
+	((input-stream-p x) 'input)
+	((output-stream-p x) 'output)
+	;; ((tcp-listener? x) 'socket)
+	((typep x 'error) 'exception)
+	(t (error "Type: unknown type ~a" x))))
+	
+	
+
 ;; cons, car, cdr...
 
 (defprim cons (a b)

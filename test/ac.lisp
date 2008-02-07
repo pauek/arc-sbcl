@@ -43,6 +43,9 @@
   (chkev 20           "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)"))
 
 (deftest t-env
+  (chkerr "(set x)")
+  (chkerr "(set x 1 y)")
+  (chkerr "(set x 1 y 2 z)")
   (chkev #\a "((fn (x) (set x #\\a) x) #\\z)")
   (chkev 1   "((fn ((o x)) (set x 1) x))")
   (chkev 2   "((fn ((o x 5)) ((fn ((o x 2)) x))))")

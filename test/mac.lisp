@@ -16,7 +16,7 @@
        (prog1 (progn ,@body)
 	 ,@(mapcar #'_off macs)))))
 
-(deftest mexp-1 
+(deftest m-simple
   (with-mac ((do (&rest b) `(progn ,@b))
 	     (x  () 'y)
 	     (z  () 5)

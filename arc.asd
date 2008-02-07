@@ -6,7 +6,8 @@
   ((:file "pkgs")
    (:file "util")
    (:file "lex")
-   (:file "ac"))
+   (:file "ac")
+   (:file "prim"))
   :serial t
 
   :depends-on (:pk-walk)
@@ -23,8 +24,9 @@
     :components
     ((:file "pkgs")
      (:file "util")
+     (:file "ac")
      (:file "mac")
-     (:file "ac"))
+     (:file "prim"))
     :serial t))
 
   :depends-on (:arc)

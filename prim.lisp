@@ -76,6 +76,10 @@
   (_compare <)
   (_compare >))
 
+(defprim len (x)
+  (cond ((hash-table-p x) (hash-table-count x))
+	(t (length x))))
+
 ;; cons, car, cdr...
 
 (defprim cons (a b)

@@ -37,3 +37,14 @@
   (chkev nil "(< \"aaz\" \"aaa\"")
   (chkev t   "(< 'a 'b 'c 'd)")
   (chkev nil "(< 'a 'b 't 's)"))
+
+(deftest t-len 
+  (chkev 1  "(len '(1))")
+  (chkev 2  "(len '(1 2))")
+  (chkev 5  "(len '(a b c d e))")
+  (chkev 1  "(len \"a\")")
+  (chkev 2  "(len \"ab\")")
+  (chkev 10 "(len \"abcdefghij\")")
+  ;; hash-tables
+  )
+

@@ -25,6 +25,9 @@
   (chkev 10           "((fn (x y (o z 1)) (* z (+ x y))) 5 5)")
   (chkev 20           "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)"))
 
+(deftest t-cmplx-arg
+  (chkev 3 "((fn ((a b)) (+ a b)) (list 1 2))"))
+
 (deftest t-index 
   (chkev #\h  "(\"hiho\" 0)")
   (chkev #\i  "(\"hiho\" 1)")

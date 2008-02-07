@@ -27,12 +27,18 @@
   (_ funcall3 a1 a2 a3)
   (_ funcall4 a1 a2 a3 a4))
 
-(defprim apply (fn args)
-  (cond ((functionp fn) (apply fn args))
-	((consp fn) (nth (car args) fn))
-	((stringp fn) (char fn (car args)))
-	((hash-table-p fn) (gethash (car args) fn))
-	(t (error "Call to inappropriate object [~a]" fn))))
+(defprim apply (fn &rest _args)
+  (labels ((_app-args (args)
+	     (cond ((null args) nil)
+		   ((null (cdr args)) (car args))
+		   (t (cons (car args) 
+			    (_app-args (cdr args)))))))
+    (let ((args (_app-args _args)))
+      (cond ((functionp fn) (apply fn args))
+	    ((consp fn) (nth (car args) fn))
+	    ((stringp fn) (char fn (car args)))
+	    ((hash-table-p fn) (gethash (car args) fn))
+	    (t (error "Call to inappropriate object [~a]" fn))))))
 
 (defprim bound (x)
   (%boundp x))
@@ -394,3 +400,20 @@
 	 while x
 	 do (arcev x))
       t)))
+
+
+(defun acompile (inname)
+  (flet ((acompile1 (in out)
+	   (w/no-colon (_in in)
+	     (loop for x = (read _in nil nil)
+		while x
+		do (let ((lisp (arcc x)))
+		     (%arcev lisp)
+		     (format out "~a~%~%" lisp))))))
+    (let ((outname (format nil "~a.lisp" inname)))
+      (with-open-file (in inname)
+	(with-open-file (out outname 
+			     :direction :output
+			     :if-exists :supersede)
+	  (acompile1 in out))))))
+

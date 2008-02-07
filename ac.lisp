@@ -183,4 +183,9 @@
   (walk 'c form))
 
 (defun arcev (form)
-  (eval (arcc form)))
+  (flet ((_ign-warn (condition)
+	   ;; Avoid SBCL warnings for global symbols
+	   (declare (ignore condition))
+	   (muffle-warning))) 
+    (handler-bind ((warning #'_ign-warn))
+      (eval (arcc form)))))

@@ -18,8 +18,8 @@
     (flet ((_opt (a) `(o ,@a)))
     `(fn (,@nrm ,@(mapcar #'_opt opt) . ,(car rest)) ,@body))))
 
-(defgeneric wset (wkr rest)
-  (:method (wkr rest) `(set ,@rest)))
+(defgeneric wset (wkr pairs)
+  (:method (wkr pairs) `(set ,@pairs)))
 
 (defgeneric wfuncall (wkr head rest)
   (:method (wkr head rest)
@@ -39,7 +39,9 @@
 (defwalk/sp arc quote (rest) 
   `(quote ,@rest))
 
-(defwalk/sp arc set (rest) 
+(defwalk/sp arc set (rest)
+  (unless (= 0 (mod (length rest) 2))
+    (error "Odd number of arguments to set"))
   (wset (wkr) (mapcar #'walk rest)))
 
 (defwalk/sp arc if (rest) 
@@ -137,7 +139,7 @@
      (declare (ignorable ,@syms)) ; Avoid SBCL warning
      ,@body))
 
-(defmethod wset ((wkr c) rest)
+(defmethod wset ((wkr c) pairs)
   (labels ((_pair (place val)
 	     (if (member place *env*)
 		 `(setf ,place ,val)
@@ -146,9 +148,8 @@
 	     (cond ((null args) nil)
 		   ((consp (cdr args)) 
 		    (cons (_pair (car args) (cadr args))
-			  (_pairs (cddr args))))
-		   (t (error "Odd number of arguments to set")))))
-    `(progn ,@(_pairs rest))))
+			  (_pairs (cddr args)))))))
+    `(progn ,@(_pairs pairs))))
 
 (defmethod wfuncall ((wkr c) head rest)
   `(funcall ,head ,@rest))

@@ -22,7 +22,7 @@
     (declare (ignore syms))
     (labels ((_mklist (x) (if (atom x) (list x) x))
 	     (_opt (a) `(o ,@(_mklist a))))
-      `(fn (,@nrm ,@(mapcar #'_opt opt) . ,(car rest)) ,@body))))
+      `(fn (,@nrm ,@(mapcar #'_opt opt) . ,rest) ,@body))))
 
 (defgeneric wset (wkr pairs)
   (:method (wkr pairs) 
@@ -101,7 +101,7 @@
       (_pargs args)
       (values (nreverse nrm) 
 	      (nreverse opt) 
-	      (nreverse rest) 
+	      (car rest)
 	      (nreverse syms)))))
 
 (defwalk/sp arc fn (rest)
@@ -190,7 +190,7 @@
 (defmethod wfn/cmplx ((wkr c) nrm opt rest syms body)
   `(lambda (,@nrm
 	    ,@(when opt  `(&optional ,@opt))
-	    ,@(when rest `(&rest ,@rest)))
+	    ,@(when rest `(&rest ,rest)))
      (declare (ignorable ,@syms)) ; Avoid SBCL warning
      ,@body))
 

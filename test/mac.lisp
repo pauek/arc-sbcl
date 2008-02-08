@@ -34,6 +34,7 @@
     (chkmac '(progn 1 (progn 3 5)) "(do 1 (do 3 5))")))
 
 (deftest m-syntax
+  (chkmac '(#\: #\;) "'(#\\: #\\;)") ;; chk. w/no-colon
   (chkmac '(compose a b c) "a:b:c")
   (chkmac '(complement a)  "~a")
   (chkmac '(compose a (complement b) c) "a:~b:c")

@@ -147,7 +147,7 @@
 	 (let ((nm (symbol-name f)))
 	   (_has-char? nm (1- (length nm)))))))
 
-(defwalk mac atom (form)
+(defun %expand-syntax (sym)
   (labels ((_chars (sym)
 	     (map 'list #'identity (symbol-name sym)))
 	   (_charsval (chs)
@@ -155,17 +155,18 @@
 	   (_exp1 (tok)
 	     (if (eq (car tok) *neg-char*)
 		 `(complement ,(_charsval (cdr tok)))
-		 (_charsval tok)))
-	   (_expand (sym)
-	     (let ((elts (mapcar #'_exp1 
-				 (tokens *cmp-char* (_chars sym) 
-					 nil nil))))
-	       (if (null (cdr elts))
-		   (car elts)
-		   (cons 'compose elts)))))
-    (if (%ssyntax? form)
-	(walk (_expand form))
-	form)))
+		 (_charsval tok))))
+    (let ((elts (mapcar #'_exp1 
+			(tokens *cmp-char* (_chars sym) 
+				nil nil))))
+      (if (null (cdr elts))
+	  (car elts)
+	  (cons 'compose elts)))))
+
+(defwalk mac atom (form)
+  (if (%ssyntax? form)
+	(walk (%expand-syntax form))
+	form))
 
 (defun %macex (wkr head rest &optional once?)
   (flet ((_walk (f)

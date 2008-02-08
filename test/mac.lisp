@@ -35,6 +35,16 @@
 
 (deftest m-syntax
   (chkmac '(#\: #\;) "(#\\: #\\;)") ;; chk. w/no-colon
+  (chkev t "(ssyntax 'a:b)")
+  (chkev t "(ssyntax '~a)")
+  (chkev t "(ssyntax 'z:y:~a)")
+  (chkev nil "(ssyntax 'a)")
+  (chkev nil "(ssyntax 1)")
+  (chkev nil "(ssyntax \"hi!\")")
+  (chkev '(compose a b c) "(expand-syntax 'a:b:c)")
+  (chkev '(complement x) "(expand-syntax '~x)")
+  (chkev '(compose a (complement q) s)
+	 "(expand-syntax 'a:~q:s)")
   (chkmac '(compose a b c) "a:b:c")
   (chkmac '(complement a)  "~a")
   (chkmac '(compose a (complement b) c) "a:~b:c")

@@ -46,6 +46,9 @@
 (defprim ssyntax (x)
   (%ssyntax? x))
 
+(defprim expand-syntax (x)
+  (%expand-syntax x))
+
 (defparameter $sig (make-hash-table :test #'equal))
 
 ;; cons, car, cdr...
@@ -377,9 +380,6 @@
 
 (defprim macex (e)
   (arcmac e))
-
-;; (mxdef macex1 (e)
-;;   (ac-macex e 'once))
 
 (defun repl ()
   (flet ((_repl ()

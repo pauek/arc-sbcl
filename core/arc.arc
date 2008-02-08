@@ -15,7 +15,7 @@
 ;   or should setf on a table just take n args?
 ; idea: permanent objs that live on disk and are updated when modified
 
-; compromises in this implementation:
+; compromises in this implementation: 
 ; no objs in code
 ;  (mac testlit args (listtab args)) breaks when called
 ; separate string type
@@ -33,15 +33,9 @@
                               (writec #\newline)))
                       (set ,var ,val)))))
 
-; It would be nice if multiple strings counted as multiple docstring lines.
-(set *help* (table))
 (set def (annotate 'mac
             (fn (name parms . body)
               `(do (sref sig ',parms ',name)
-                   ; Document the function, including the docstring if present
-                   (if (is (type ',(car body)) 'string)
-                       (sref *help* '(fn ,(car body)) ',name)
-                       (sref *help* '(fn nil) ',name))
                    (safeset ,name (fn ,parms ,@body))))))
 
 (def caar (xs) (car (car xs)))
@@ -61,7 +55,7 @@
 ; Maybe later make this internal.
 
 (def map1 (f xs)
-  (if (no xs)
+  (if (no xs) 
       nil
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
@@ -76,10 +70,6 @@
 (set mac (annotate 'mac
            (fn (name parms . body)
              `(do (sref sig ',parms ',name)
-                   ; Document the macro, including the docstring if present
-                   (if (is (type ',(car body)) 'string)
-                       (sref *help* '(mac ,(car body)) ',name)
-                       (sref *help* '(mac nil) ',name))
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
 (mac and args
@@ -107,9 +97,9 @@
   `(with (,var ,val) ,@body))
 
 (mac withs (parms . body)
-  (if (no parms)
+  (if (no parms) 
       `(do ,@body)
-      `(let ,(car parms) ,(cadr parms)
+      `(let ,(car parms) ,(cadr parms) 
          (withs ,(cddr parms) ,@body))))
 
 ; Rtm prefers to overload + to do this
@@ -117,24 +107,24 @@
 (def join args
   (if (no args)
       nil
-      (let a (car args)
-        (if (no a)
+      (let a (car args) 
+        (if (no a) 
             (apply join (cdr args))
             (cons (car a) (apply join (cdr a) (cdr args)))))))
 
-; Self-referencing lambda expression.
-; Creates a closure wherein lambda is bound to name.
+; Need rfn for use in macro expansions.
 
 (mac rfn (name parms . body)
   `(let ,name nil
      (set ,name (fn ,parms ,@body))))
 
 (mac afn (parms . body)
-  `(rfn self ,parms ,@body))
+  `(let self nil
+     (set self (fn ,parms ,@body))))
 
 ; Ac expands x:y:z into (compose x y z), ~x into (complement x)
 
-; Only used when the call to compose doesn't occur in functional position.
+; Only used when the call to compose doesn't occur in functional position.  
 ; Composes in functional position are transformed away by ac.
 
 (mac compose args
@@ -150,7 +140,7 @@
   (let g (uniq)
     `(fn ,g (no (apply ,f ,g)))))
 
-(def rev (xs)
+(def rev (xs) 
   ((afn (xs acc)
      (if (no xs)
          acc
@@ -183,9 +173,9 @@
 
 (def iso (x y)
   (or (is x y)
-      (and (acons x)
-           (acons y)
-           (iso (car x) (car y))
+      (and (acons x) 
+           (acons y) 
+           (iso (car x) (car y)) 
            (iso (cdr x) (cdr y)))))
 
 (mac when (test . body)
@@ -200,8 +190,8 @@
         (when ,gp ,@body (,gf ,test)))
       ,test)))
 
-(def empty (seq)
-  (or (no seq)
+(def empty (seq) 
+  (or (no seq) 
       (and (no (acons seq)) (is (len seq) 0))))
 
 (def reclist (f xs)
@@ -224,9 +214,9 @@
         (reclist f:car seq)
         (recstring f:seq seq))))
 
-(def all (test seq)
+(def all (test seq) 
   (~some (complement (testify test)) seq))
-
+       
 (def mem (test seq)
   (let f (testify test)
     (reclist [if (f:car _) _] seq)))
@@ -253,7 +243,7 @@
 
 
 (def map (f . seqs)
-  (if (some [isa _ 'string] seqs)
+  (if (some [isa _ 'string] seqs) 
        (withs (n   (apply min (map len seqs))
                new (newstring n))
          ((afn (i)
@@ -262,10 +252,10 @@
                 (do (sref new (apply f (map [_ i] seqs)) i)
                     (self (+ i 1)))))
           0))
-      (no (cdr seqs))
+      (no (cdr seqs)) 
        (map1 f (car seqs))
       ((afn (seqs)
-        (if (some no seqs)
+        (if (some no seqs)  
             nil
             (cons (apply f (map1 car seqs))
                   (self (map1 cdr seqs)))))
@@ -304,7 +294,7 @@
 
 (mac atlet args
   `(atomic (let ,@args)))
-
+  
 (mac atwith args
   `(atomic (with ,@args)))
 
@@ -328,7 +318,7 @@
 
 (mac defset (name parms . body)
   (w/uniq gexpr
-    `(sref setter
+    `(sref setter 
            (fn (,gexpr)
              (let ,parms (cdr ,gexpr)
                ,@body))
@@ -365,15 +355,15 @@
           `(fn (val) (scdr (cdr ,g) val)))))
 
 ; Note: if expr0 macroexpands into any expression whose car doesn't
-; have a setter, setforms assumes it's a data structure in functional
-; position.  Such bugs will be seen only when the code is executed, when
+; have a setter, setforms assumes it's a data structure in functional 
+; position.  Such bugs will be seen only when the code is executed, when 
 ; sref complains it can't set a reference to a function.
 
 (def setforms (expr0)
   (let expr (macex expr0)
     (if (isa expr 'sym)
          (w/uniq (g h)
-           (list (list g expr)
+           (list (list g expr) 
                  g
                  `(fn (,h) (set ,expr ,h))))
         ; make it also work for uncompressed calls to compose
@@ -384,7 +374,7 @@
                (f expr)
                ; assumed to be data structure in fn position
                (do (when (caris (car expr) 'fn)
-                     (warn "Inverting what looks like a function call"
+                     (warn "Inverting what looks like a function call" 
                            expr0 expr))
                    (w/uniq (g h)
                      (let argsyms (map [uniq] (cdr expr))
@@ -426,7 +416,7 @@
 (mac loop (start test update . body)
   (w/uniq (gfn gparm)
     `(do ,start
-         ((rfn ,gfn (,gparm)
+         ((rfn ,gfn (,gparm) 
             (if ,gparm
                 (do ,@body ,update (,gfn ,test))))
           ,test))))
@@ -466,7 +456,7 @@
           (= (s2 i) (seq (+ start i))))
         s2)
       (firstn (- end start) (nthcdr start seq))))
-
+      
 (mac ontable (k v h . body)
   `(maptable (fn (,k ,v) ,@body) ,h))
 
@@ -492,7 +482,7 @@
           seq)
         (coerce (rem test (coerce seq 'cons)) 'string))))
 
-(def keep (test seq)
+(def keep (test seq) 
   (rem (complement (testify test)) seq))
 
 (def trues (f seq) (rem nil (map f seq)))
@@ -508,7 +498,7 @@
 
 (mac caselet (var expr . args)
   (let ex (afn (args)
-            (if (no (cdr args))
+            (if (no (cdr args)) 
                 (car args)
                 `(if (is ,var ',(car args))
                      ,(cadr args)
@@ -549,7 +539,7 @@
   (w/uniq g
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ binds (list g val))
-         (do1 (car ,g)
+         (do1 (car ,g) 
               (,setter (cdr ,g)))))))
 
 (def adjoin (x xs (o test iso))
@@ -590,7 +580,7 @@
 (mac zap (op place . args)
   (with (gop    (uniq)
          gargs  (map [uniq] args)
-         mix    (afn seqs
+         mix    (afn seqs 
                   (if (some no seqs)
                       nil
                       (+ (map car seqs)
@@ -602,7 +592,7 @@
 ; Can't simply mod pr to print strings represented as lists of chars,
 ; because empty string will get printed as nil.  Would need to rep strings
 ; as lists of chars annotated with 'string, and modify car and cdr to get
-; the rep of these.  That would also require hacking the reader.
+; the rep of these.  That would also require hacking the reader.  
 
 ;(def pr args
 ;  (if (isa (car args) 'output)
@@ -655,7 +645,7 @@
 
 (mac aand args
   (if (no args)
-      't
+      't 
       (no (cdr args))
        (car args)
       `(let it ,(car args) (and it (aand ,@(cdr args))))))
@@ -685,10 +675,10 @@
   (w/uniq gf
     `((rfn ,gf (,var)
         (when (and ,var (no (is ,var ,endval)))
-          ,@body
+          ,@body 
           (,gf ,expr)))
       ,expr)))
-
+  
 ;(def macex (e)
 ;  (if (atom e)
 ;      e
@@ -712,7 +702,7 @@
    x nil))
 
 ; Perhaps not the final idea, or at least final name
-
+        
 (mac default (x test alt)
   (w/uniq gx
     `(let ,gx ,x
@@ -722,12 +712,12 @@
   (let f (testify test)
     (if (alist seq)
         ((afn (seq n)
-           (if (no seq)
+           (if (no seq)   
                 nil
-               (f (car seq))
+               (f (car seq)) 
                 n
                (self (cdr seq) (+ n 1))))
-         (nthcdr start seq)
+         (nthcdr start seq) 
          start)
         (recstring [if (f (seq _)) _] seq start))))
 
@@ -738,7 +728,7 @@
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
 
-(let expander
+(let expander 
      (fn (f var name body)
        `(let ,var (,f ,name)
           (after (do ,@body) (close ,var))))
@@ -802,13 +792,13 @@
 
 (mac rand-choice exprs
   `(case (rand ,(len exprs))
-     ,@(let key -1
+     ,@(let key -1 
          (mappend [list (++ key) _]
                   exprs))))
 
 (mac n-of (n expr)
   (w/uniq ga
-    `(let ,ga nil
+    `(let ,ga nil     
        (repeat ,n (push ,expr ,ga))
        (rev ,ga))))
 
@@ -840,7 +830,7 @@
         (each elt (cdr seq)
           (if (f elt wins) (= wins elt)))
         wins)))
-
+              
 (def max args (best > args))
 (def min args (best < args))
 
@@ -848,7 +838,7 @@
 ;   (w/uniq (a b)
 ;     `(with (,a ,x ,b ,y) (if (> ,a ,b) ,a ,b))))
 
-(def most (f seq)
+(def most (f seq) 
   (unless (no seq)
     (withs (wins (car seq) topscore (f wins))
       (each elt (cdr seq)
@@ -857,13 +847,13 @@
       wins)))
 
 ; Insert so that list remains sorted.  Don't really want to expose
-; these but seem to have to because can't include a fn obj in a
+; these but seem to have to because can't include a fn obj in a 
 ; macroexpansion.
-
+  
 (def insert-sorted (test elt seq)
   (if (no seq)
-       (list elt)
-      (test elt (car seq))
+       (list elt) 
+      (test elt (car seq)) 
        (cons elt seq)
       (cons (car seq) (insert-sorted test elt (cdr seq)))))
 
@@ -871,18 +861,18 @@
   `(zap [insert-sorted ,test ,elt _] ,seq))
 
 (def reinsert-sorted (test elt seq)
-  (if (no seq)
-       (list elt)
+  (if (no seq) 
+       (list elt) 
       (is elt (car seq))
        (reinsert-sorted test elt (cdr seq))
-      (test elt (car seq))
+      (test elt (car seq)) 
        (cons elt (rem elt seq))
       (cons (car seq) (reinsert-sorted test elt (cdr seq)))))
 
 (mac insortnew (test elt seq)
   `(zap [reinsert-sorted ,test ,elt _] ,seq))
 
-; Could make this look at the sig of f and return a fn that took the
+; Could make this look at the sig of f and return a fn that took the 
 ; right no of args and didn't have to call apply (or list if 1 arg).
 
 (def memo (f)
@@ -895,17 +885,17 @@
   `(safeset ,name (memo (fn ,parms ,@body))))
 
 (def <= args
-  (or (no args)
+  (or (no args) 
       (no (cdr args))
       (and (no (> (car args) (cadr args)))
            (apply <= (cdr args)))))
 
 (def >= args
-  (or (no args)
+  (or (no args) 
       (no (cdr args))
       (and (no (< (car args) (cadr args)))
            (apply >= (cdr args)))))
-
+              
 (def whitec (c)
   (in c #\space #\newline #\tab #\return))
 
@@ -919,7 +909,7 @@
 
 (def readline ((o str (stdin)))
   (awhen (readc str)
-    (tostring
+    (tostring 
       (writec it)
       (whiler c (readc str) #\newline
         (writec c)))))
@@ -947,8 +937,8 @@
     (pr init (car elts))
     (map [pr sep _] (cdr elts))
     elts))
-
-(def prs args
+             
+(def prs args     
   (prall args "" #\space))
 
 (def tree-subst (old new tree)
@@ -982,10 +972,10 @@
               (pair args))
        ,g)))
 
-(def keys (h)
+(def keys (h) 
   (accum a (ontable k v h (a k))))
 
-(def vals (h)
+(def vals (h) 
   (accum a (ontable k v h (a v))))
 
 ; These two should really be done by coerce.  Wrap coerce?
@@ -1026,7 +1016,7 @@
                (= (new i) (x i)))
              new)
     table  (let new (table)
-             (ontable k v x
+             (ontable k v x 
                (= (new k) v))
              new)
            (err "Can't copy " x)))
@@ -1047,7 +1037,7 @@
 
 (def roundup (n)
   (withs (base (truncate n) rem (abs (- n base)))
-    (if (>= rem 1/2)
+    (if (>= rem 1/2) 
         ((if (> n 0) + -) base 1)
         base)))
 
@@ -1057,14 +1047,14 @@
 (def avg (ns) (/ (apply + ns) (len ns)))
 
 ; Use mergesort on assumption that mostly sorting mostly sorted lists
-; benchmark: (let td (n-of 10000 (rand 100)) (time (sort < td)) 1)
+; benchmark: (let td (n-of 10000 (rand 100)) (time (sort < td)) 1) 
 
 (def sort (test seq)
   (if (alist seq)
       (mergesort test (copy seq))
       (coerce (mergesort test (coerce seq 'cons)) (type seq))))
 
-; Destructive stable merge-sort, adapted from slib and improved
+; Destructive stable merge-sort, adapted from slib and improved 
 ; by Eli Barzilay for MzLib; re-written in Arc.
 
 (def mergesort (less? lst)
@@ -1126,7 +1116,7 @@
   (firstn n (sort f seq)))
 
 (def split (seq pos)
-  (withs (mid (nthcdr (- pos 1) seq)
+  (withs (mid (nthcdr (- pos 1) seq) 
           s2  (cdr mid))
     (nil! (cdr mid))
     (list seq s2)))
@@ -1151,7 +1141,7 @@
 
 (mac deftem (tem . fields)
   (withs (name (carif tem) includes (if (acons tem) (cdr tem)))
-    `(= (templates* ',name)
+    `(= (templates* ',name) 
         (+ (maps templates* ',(rev includes))
            (list ,@(map (fn ((k v)) `(list ',k (fn () ,v)))
                         (pair fields)))))))
@@ -1183,7 +1173,7 @@
   (w/infile i file (temread tem i)))
 
 (def temloadall (tem file)
-  (map (fn (pairs) (templatize tem pairs))
+  (map (fn (pairs) (templatize tem pairs))       
        (w/infile in file (readall in))))
 
 
@@ -1203,7 +1193,7 @@
 
 (def saferead (arg) (errsafe (read arg)))
 
-(def safe-load-table (filename)
+(def safe-load-table (filename) 
   (or (errsafe (load-table filename))
       (table)))
 
@@ -1211,15 +1201,15 @@
   (unless (dir-exists path)
     (system (string "mkdir -p " path))))
 
-(def uname nil
+(def uname nil 
   (let val (tostring (system "uname"))
   (subseq val 0 (- (len val) 1))))
 
 (def date ((o time (seconds)))
-  (let val (tostring (system
+  (let val (tostring (system 
                       (string
                        "date -u "
-                       (if
+                       (if 
                         (is (uname) "Linux")
                         ;; Linux wants -d and an interval
                         (string "-d \"" (- 1 (since time)) " seconds\"")
@@ -1262,9 +1252,9 @@
 (def multiple (x y)
   (is 0 (mod x y)))
 
-(mac nor args `(no (or ,@args)))
+(mac nor args `(no (or ,@args))) 
 
-; Consider making the default sort fn take compare's two args (when do
+; Consider making the default sort fn take compare's two args (when do 
 ; you ever have to sort mere lists of numbers?) and rename current sort
 ; as prim-sort or something.
 
@@ -1308,7 +1298,7 @@
 
 (def plural (n str)
   (if (or (is n 1) (single n))
-      str
+      str 
       (string str "s")))
 
 (def intersperse (x ys)
@@ -1336,33 +1326,15 @@
                (self (- n 1) (cdr xs)))))
      n xs)))
 
-; In the normal case, the result of reduce is the combined result of function's
-; being applied to successive pairs of elements of sequence. If the sequence
-; contains exactly one element and no init is given, then that element is returned
-; and function is not called. If the sequence is empty and init is given, then
-; init is returned and function is not called. If the sequence is empty and init
-; is not given, then the function is called with zero arguments, and reduce returns
-; whatever function does. This is the only case where the function is called with
-; other than two arguments.
+(def reduce (f xs)
+  (if (cddr xs)
+      (reduce f (cons (f (car xs) (cadr xs)) (cddr xs)))
+      (apply f xs)))
 
-(let initsym (uniq)
-
-  ; Left-associative
-  (def reduce (f xs (o init initsym))
-    ((afn (xs)
-       (if (cdr xs) (self (cons (f (car xs) (cadr xs)) (cddr xs)))
-           xs (car xs)
-           (f)))
-     (if (is init initsym) xs (cons init xs))))
-
-  ; Right-associative
-  ; Rather inefficent due to recursive call not being in the tail position.
-  (def rreduce (f xs (o init initsym))
-    ((afn (xs)
-       (if (cdr xs) (f (car xs) (rreduce f (cdr xs)))
-           xs (car xs)
-           (f)))
-     (if (is init initsym) xs (join xs (list init))))))
+(def rreduce (f xs)
+  (if (cddr xs)
+      (f (car xs) (rreduce f (cdr xs)))
+      (apply f xs)))
 
 (let argsym (uniq)
 
@@ -1371,7 +1343,7 @@
            (with (chars nil  i -1)
              (w/instring s str
                (whilet c (readc s)
-                 (case c
+                 (case c 
                    #\# (do (a (coerce (rev chars) 'string))
                            (nil! chars)
                            (a (read s)))
@@ -1382,7 +1354,7 @@
                        (push c chars))))
               (when chars
                 (a (coerce (rev chars) 'string)))))))
-
+  
   (mac prf (str . args)
     `(let ,argsym (list ,@args)
        (pr ,@(parse-format str))))
@@ -1399,9 +1371,9 @@
 (mac w/table (var . body)
   `(let ,var (table) ,@body ,var))
 
-(def ero args
-  (each a args
-    (write a (stderr))
+(def ero args 
+  (each a args 
+    (write a (stderr)) 
     (writec #\space (stderr))))
 
 (def queue () (list nil nil 0))
@@ -1441,7 +1413,7 @@
     `(with (,gn ,n ,gc 0)
        (each ,var ,val
          (when (multiple (++ ,gc) ,gn)
-           (pr ".")
+           (pr ".") 
            ;(flushout)
            )
          ,@body)
@@ -1483,7 +1455,6 @@
              (err "Can't upcase" x))))
 
 (def range (start end)
-  "Return a range of numbers from `start' to `end'."
   (if (> start end)
       nil
       (cons start (range (+ start 1) end))))
@@ -1513,23 +1484,11 @@
                                  (pr ,out))))))
                   body)))))
 
-(mac $ body
-   (list 'seval (cons 'quasiquote body)))
-
-(mac help (name)
-   (withs (h     (*help* name)
-           kind  (car h)
-           doc   (cadr h))
-     (pr "[" kind "] ")
-     (prn (if (sig name)
-              (cons name (sig name))))
-     (prn (or doc "Documentation unavailable")))
-   nil)
 
 ; Lower priority ideas
 
 ; solution to the "problem" of improper lists: allow any atom as a list
-;  terminator, not just nil.  means list recursion should terminate on
+;  terminator, not just nil.  means list recursion should terminate on 
 ;  atom rather than nil, (def empty (x) (or (atom x) (is x "")))
 ; table should be able to take an optional initial-value.  handle in sref.
 ; warn about code of form (if (= )) -- probably mean is

@@ -36,4 +36,6 @@
 (deftest m-syntax
   (chkmac '(compose a b c) "a:b:c")
   (chkmac '(complement a)  "~a")
-  (chkmac '(compose a (complement b) c) "a:~b:c"))
+  (chkmac '(compose a (complement b) c) "a:~b:c")
+  (with-mac ((compose (&rest b) `(dummy ,@b)))
+    (chkmac '(dummy a b c) "a:b:c"))) ;; nested

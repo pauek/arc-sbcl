@@ -385,6 +385,7 @@
   (flet ((_repl ()
 	   (loop 
 	      (princ "arc> ")
+	      (finish-output)
 	      (w/no-colon 
 		(let ((expr (read)))
 		  (if (eql expr :a)

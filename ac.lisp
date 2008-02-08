@@ -15,7 +15,6 @@
 
 (defgeneric wfn (wkr arg-list body)
   (:method (wkr arg-list body)
-    (declare (ignore wkr))
     (labels ((_rbld (x &optional acum)
 	       (flet ((_rcr (a)
 			(_rbld (cdr x) a)))
@@ -307,4 +306,3 @@
 
 (defun arcev (form)
   (%arcev (arcc form)))
-

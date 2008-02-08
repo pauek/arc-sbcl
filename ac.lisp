@@ -160,19 +160,26 @@
 		     (car elts)
 		     (cons 'compose elts)))))
       (if (_special? form)
-	  (_expand form)
+	  (walk (_expand form))
 	  form))))
 
-(defwalk mac list (head rest)
-  (flet ((_macro? (x)
+(defun %macex (wkr head rest &optional once?)
+  (flet ((_walk (f)
+	   (wform wkr f))
+	 (_macro? (x)
 	   (when (symbolp x)
 	     (let ((fn (%symval x)))
 	       (when (%tag? 'mac fn)
 		 (%rep fn))))))
     (let ((m (_macro? head)))
-      (if m
-	  (walk (apply m rest))
-	  (cons (walk head) (mapcar #'walk rest))))))
+      (if m 
+	  (if once?
+	      (apply m rest)
+	      (_walk (apply m rest)))
+	  (cons (_walk head) (mapcar #'_walk rest))))))
+
+(defwalk mac list (head rest)
+  (%macex (wkr) head rest))
 
 ;;; Continuation passing style
 
@@ -243,12 +250,13 @@
 	     (every #'(lambda (x) (eq (car x) :nrm)) 
 		    arg-list)))
     (if (_normal?)
-	`(lambda ,(sym-list arg-list)
-	   (declare (ignorable ,@(sym-list arg-list)))
-	   ,@_body)
+	(let ((syms (sym-list arg-list)))
+	  `(lambda ,syms
+	     ,@(when syms 
+		 `((declare (ignorable ,@(sym-list arg-list)))))
+	     ,@_body))
 	(let ((args (gensym))
-	      (body `((declare (ignorable ; Avoid SBCL warn.
-				,@(sym-list arg-list))) 
+	      (body `((declare (ignorable ,@(sym-list arg-list))) 
 		      ,@_body)))
 	  `(lambda (&rest ,args)
 	     ,(%arc-destructure arg-list args body))))))
@@ -263,6 +271,7 @@
 
 (defmethod wfuncall ((wkr c) head rest)
   (let ((len (length rest)))
+    (assert (not (%tag? 'mac head)))
     (cond ((<= 0 len 4) 
 	   `(,(%sym (format nil "FUNCALL~a" len)) ,head ,@rest))
 	  (t 
@@ -293,3 +302,4 @@
 
 (defun arcev (form)
   (%arcev (arcc form)))
+

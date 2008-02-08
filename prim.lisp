@@ -370,6 +370,9 @@
   (handler-case (funcall f)
     (error (e) (funcall errfn e))))
 
+(defprim macex1 (e)
+  (%macex (new-walker 'mac) (car e) (cdr e) t))
+
 (defprim macex (e)
   (arcmac e))
 
@@ -380,14 +383,15 @@
   (flet ((_repl ()
 	   (loop 
 	      (princ "arc> ")
-	      (let ((expr (read)))
-		(if (eql expr :a)
-		    (return 'done)
-		    (let ((val (arcev expr)))
-		      (write val)
-		      (set '_that val)
-		      (set '_thatexpr expr)
-		      (terpri)))))))
+	      (w/no-colon (in *standard-input*)
+		(let ((expr (read in)))
+		  (if (eql expr :a)
+		      (return 'done)
+		      (let ((val (arcev expr)))
+			(write val)
+			(set '_that val)
+			(set '_thatexpr expr)
+			(terpri))))))))
     (format t "Use (quit) to quit, (tl) to return here after an interrupt.~%")
     (loop
        (handler-case (_repl)
@@ -408,8 +412,9 @@
 	     (loop for x = (read _in nil nil)
 		while x
 		do (let ((lisp (arcc x)))
-		     (format t "~s~%~%" lisp)
+		     (format t "~s~%" lisp)
 		     (%arcev lisp)
+		     (format t "~%")
 		     (finish-output out))))))
     (let ((outname (format nil "~a.lisp" inname)))
       (with-open-file (in inname)
@@ -418,3 +423,25 @@
 			     :if-exists :supersede)
 	  (acompile1 in out))))))
 
+;;; Trace
+
+(defprim trace (_sym)
+  (unless (symbolp _sym)
+    (error "Parameter must be a symbol"))
+  (flet ((_reporter (orig)
+	   #'(lambda (&rest args)
+	       (format t "+~a~%" _sym)
+	       (prog1 ($apply orig args)
+		 (format t "-~a~%" _sym)))))
+    (let ((sym  (%sym _sym))
+	  (orig (%symval _sym)))
+      (setf (get sym 'orig) orig)
+      (set sym (if (%tag? 'mac orig)
+		   (%mk-tagged 'mac (_reporter (%rep orig)))
+		   (_reporter orig)))))
+  _sym)
+
+(defprim untrace (sym)
+  (set (%sym sym)
+       (get (%sym sym) 'orig))
+  t)

@@ -30,8 +30,8 @@
   (incf (cdr *curr*)))
 
 (defun arc-read-form (str)
-  (with-input-from-string (_s str)
-    (w/no-colon (s _s) (read s))))
+  (with-input-from-string (s str)
+    (w/no-colon (read s))))
 
 (macrolet ((_chk (name fn)
 	     `(defun ,name (res str)

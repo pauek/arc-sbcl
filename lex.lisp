@@ -24,24 +24,24 @@
 ;;;;
 ;;;;   Handle package marker #\:
 
-#|
 ;; Version 1: Fragile hack...
 
-(defmacro w/no-colon-1 (&body body)
-  (flet ((_colon (on?)
-	   `(setf (elt sb-impl::*constituent-trait-table* 
-		       (char-code #\:))
-		  ,(if on? 
-		       'sb-impl::+char-attr-package-delimiter+
-		       'sb-impl::+char-attr-constituent+))))
-    `(progn
-       ,(_colon nil)
-       (let (res)
-	 (unwind-protect (setf res (progn ,@body))
-	   ,(_colon t)
-	   res)))))
-|#
+(defun %copy-trait-table (tab)
+  (let* ((sz (length tab))
+	 (newtab (make-array sz :element-type '(unsigned-byte 8))))
+    (dotimes (i sz)
+      (setf (aref newtab i) (aref tab i)))
+    newtab))
 
+(defmacro w/no-colon (&body body)
+  `(let* ((old sb-impl::*constituent-trait-table*)
+	  (new (%copy-trait-table old)))
+     (setf (elt new (char-code #\:)) 
+	   sb-impl::+char-attr-constituent+)
+     (let ((sb-impl::*constituent-trait-table* new))
+       ,@body)))
+
+#|
 ;; Version 2: Gray streams...
 
 (defclass wrap-stream (fundamental-stream)
@@ -88,3 +88,5 @@
 (defmacro w/no-colon ((var stream) &body body)
   `(with-open-stream (,var (new-esc-stream #\: ,stream))
      ,@body))
+
+|#

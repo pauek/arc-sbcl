@@ -386,8 +386,8 @@
   (flet ((_repl ()
 	   (loop 
 	      (princ "arc> ")
-	      (w/no-colon (in *standard-input*)
-		(let ((expr (read in)))
+	      (w/no-colon 
+		(let ((expr (read)))
 		  (if (eql expr :a)
 		      (return 'done)
 		      (let ((val (arcev expr)))
@@ -401,9 +401,9 @@
 	 (error (e) (format t "Error: ~a~%" e))))))
 
 (defun aload (file)
-  (with-open-file (_s file) 
-    (w/no-colon (s _s)
-      (loop for x = (read s nil t)
+  (with-open-file (f file) 
+    (w/no-colon
+      (loop for x = (read f nil t)
 	 while x
 	 do (arcev x))
       t)))
@@ -411,8 +411,8 @@
 
 (defun acompile (inname)
   (flet ((acompile1 (in out)
-	   (w/no-colon (_in in)
-	     (loop for x = (read _in nil nil)
+	   (w/no-colon 
+	     (loop for x = (read in nil nil)
 		while x
 		do (let ((lisp (arcc x)))
 		     (format t "~s~%" lisp)

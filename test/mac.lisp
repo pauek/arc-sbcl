@@ -33,6 +33,7 @@
   (with-mac ((do (&rest b) `(progn ,@b)))
     (chkmac '(progn 1 (progn 3 5)) "(do 1 (do 3 5))")))
 
-(deftest t-syntax
+(deftest m-syntax
   (chkmac '(compose a b c) "a:b:c")
-  (chkmac '(complement a)  "~a"))
+  (chkmac '(complement a)  "~a")
+  (chkmac '(compose a (complement b) c) "a:~b:c"))

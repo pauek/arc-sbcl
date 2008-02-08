@@ -235,10 +235,12 @@
 			  (:rst `(&rest ,(cadar x)))
 			  (:nrm (cons (cadar x) acum))
 			  (:opt `(&optional ,(cdar x) ,@acum))
-			  (:des `((&optional ,@(_rmv-opt (_rbld (reverse (cadar x)))))
+			  (:des `((&optional 
+				   ,@(_rmv-opt (_rbld (reverse (cadar x)))))
 				  ,@acum)))))))
     (let ((args (gensym))
-	  (body `((declare (ignorable ,@(sym-list arg-list))) ; Avoid SBCL warn.
+	  (body `((declare (ignorable ; Avoid SBCL warn.
+			    ,@(sym-list arg-list))) 
 		  ,@_body)))
       `(lambda (&rest ,args)
 	 ,(%arc-destructure arg-list args body)))))

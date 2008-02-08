@@ -26,7 +26,16 @@
   (chkev 20           "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)"))
 
 (deftest t-cmplx-arg
-  (chkev 3 "((fn ((a b)) (+ a b)) (list 1 2))"))
+  (chkev 1    "((fn ((a b)) (- a b)) (list 2 1))")
+  (chkev "xx" "((fn (a (o b a)) (+ b a)) \"x\")")
+  (chkev 6    "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 1)")
+  (chkev 30   "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 2 3)")
+  (chkev 8    "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 2 2 2)")
+  (chkev '((a b) c) "((fn ((x (y z))) `((,x ,y) ,z)) '(a (b c)))")
+  (chkev '(j k l m) "((fn (x (y z) t) `(,x ,y ,z ,t)) 'j '(k l) 'm)")
+  (chkev '((j k) l (m n o)) "((fn (x (y z) . t) `((,x ,y) ,z ,t)) 'j '(k l) 'm 'n 'o)")
+  (chkev '(a nil) "((fn ((x y)) (list x y)) '(a))")
+  (chkev '(a b nil) "((fn ((x y z)) (list x y z)) '(a b))"))
 
 (deftest t-index 
   (chkev #\h  "(\"hiho\" 0)")

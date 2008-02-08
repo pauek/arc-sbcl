@@ -230,9 +230,14 @@
 	(t (error "Can't close ~a" p)))
   nil)
 
-(defparameter $stdout *standard-output*)
-(defparameter $stdin  *standard-input*)
-(defparameter $stderr *error-output*)
+(defprim stdout ()
+  *standard-output*)
+
+(defprim stdin ()
+  *standard-input*)
+
+(defprim stderr ()
+  *error-output*)
 
 (defprim call-w/stdout (port thunk)
   (let ((*standard-output* port)) (funcall thunk)))
@@ -338,6 +343,12 @@
 
 
 ;; Threads
+
+(defvar *mutex* (make-mutex :name "Arc"))
+
+(defprim atomic-invoke (f)
+  (with-mutex (*mutex*)
+    ($apply f nil)))
 
 ; atomic-invoke
 ; dead

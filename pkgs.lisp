@@ -7,6 +7,7 @@
   (:use :cl 
 	:sb-gray 
 	:sb-ext 
+	:sb-thread
 	:sb-bsd-sockets
 	:pk-walk)
   (:export :arcmac

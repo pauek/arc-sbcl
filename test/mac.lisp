@@ -32,3 +32,7 @@
 (deftest m-nested
   (with-mac ((do (&rest b) `(progn ,@b)))
     (chkmac '(progn 1 (progn 3 5)) "(do 1 (do 3 5))")))
+
+(deftest t-syntax
+  (chkmac '(compose a b c) "a:b:c")
+  (chkmac '(complement a)  "~a"))

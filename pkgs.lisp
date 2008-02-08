@@ -13,8 +13,10 @@
 	   :arcc
 	   :arcev
 	   :w/no-colon
+	   :compose
 	   :fn
 	   :o
+	   :++
 	   :int
 	   :num
 	   :sym

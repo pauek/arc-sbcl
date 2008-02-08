@@ -160,7 +160,25 @@
 			   ,(_if (cddr args)))))))
     (_if rest)))
 
-(defmethod wfn ((wkr c) arg-list body)
+(defun %arc-destructure (args sym body)
+  (let (acum)
+    (labels ((_ac (x) (push x acum))
+	     (_destr (args curr &optional root?)
+	       (if (null args) nil
+		   (let ((a (car args)))
+		     (ecase (car a)
+		       (:rst (_ac `(,(cadr a) ,curr)))
+		       (:nrm (_ac `(,(cadr a) 
+				     (,(if root? '%ecar '%car) ,curr))))
+		       (:opt (_ac `(,(cadr a) 
+				     (or (%car ,curr) ,(caddr a)))))
+		       (:des (_destr (cadr a) `(%car ,curr))))
+		     (_destr (cdr args) `(%cdr ,curr) root?)))))
+      (_destr args sym t)
+      `(let* (,@(reverse acum))
+	 ,@body))))
+       
+(defmethod wfn ((wkr c) arg-list _body)
   (labels ((_rmv-opt (lst)
 	     (remove '&optional lst))
 	   (_rmv-dup-opts (lst)
@@ -179,11 +197,11 @@
 			  (:opt `(&optional ,(cdar x) ,@acum))
 			  (:des `((&optional ,@(_rmv-opt (_rbld (reverse (cadar x)))))
 				  ,@acum)))))))
-    (let ((args (gensym)))
+    (let ((args (gensym))
+	  (body `((declare (ignorable ,@(sym-list arg-list))) ; Avoid SBCL warn.
+		  ,@_body)))
       `(lambda (&rest ,args)
-	 (destructuring-bind ,(_rbld (reverse arg-list)) ,args
-	   (declare (ignorable ,@(sym-list arg-list))) ; Avoid SBCL warning
-	   ,@body)))))
+	 ,(%arc-destructure arg-list args body)))))
 
 (defmethod wset ((wkr c) pairs)
   (labels ((_pair (p)

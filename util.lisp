@@ -10,6 +10,17 @@
 (defun %car (x)
   (and (consp x) (car x)))
 
+(defun %ecar (x)
+  (if (consp x) (car x)
+      (error "ecar: not a cons")))
+
+(defun %cdr (x)
+  (and (consp x) (cdr x)))
+
+(defun %ecdr (x)
+  (if (consp x) (car x)
+      (error "ecdr: not a cons")))
+
 ;; Symbols
 
 (defun %sym (sym)

@@ -174,6 +174,19 @@
 (defprim newstring (n &optional (ch (code-char 0)))
   (make-string n :initial-element ch))
 
+; truncate
+; exact
+
+
+;; Time
+
+(defprim msec ()
+  (get-internal-real-time))
+
+; current-process-milliseconds
+; current-gc-milliseconds
+; seconds
+
 ;; Gensyms
 
 (defprim uniq ()
@@ -326,6 +339,9 @@
 
 ;; Threads
 
+; atomic-invoke
+; dead
+
 ;; Sockets
 
 (defprim open-socket (num)
@@ -335,6 +351,7 @@
     (sb-bsd-sockets:socket-listen sk 15) ;; from Araneida... 15?
     sk))
 
+; client-ip
 ; socket-accept
 
 ;; System
@@ -362,7 +379,19 @@
 (defprim quit ()
   (sb-ext:quit))
 
-;dir
+;; Files
+
+(defprim dir (path)
+  (flet ((_name (_p)
+	   (let ((p (cl-fad:pathname-as-file _p)))
+	     (if (pathname-type p)
+		 (format nil "~a.~a"
+			 (pathname-name p)
+			 (pathname-type p))
+		 (pathname-name p)))))
+    (let ((paths (cl-fad:list-directory path)))
+      (mapcar #'_name paths))))
+
 ;file-exists
 ;dir-exists
 ;rmfile
@@ -375,6 +404,8 @@
 (defprim on-err (errfn f)
   (handler-case (funcall f)
     (error (e) (funcall errfn e))))
+
+; details
 
 (defprim macex1 (e)
   (%macex (new-walker 'mac) (car e) (cdr e) t))

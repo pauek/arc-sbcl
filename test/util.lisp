@@ -33,16 +33,14 @@
   (with-input-from-string (_s str)
     (w/no-colon (s _s) (read s))))
 
-(defun chkmac (res str)
-  (chk (== res (arcmac (arc-read-form str)))))
-
-(defun chkc (res str)
-  (chk (== res (arcc (arc-read-form str)))))
-
-(defun chkev (res str)
-  (chk (== res 
-	   (ignore-errors 
-	     (arcev (arc-read-form str))))))
+(macrolet ((_chk (name fn)
+	     `(defun ,name (res str)
+		(chk (== res 
+			 (ignore-errors
+			   (,fn (arc-read-form str))))))))
+  (_chk chkmac arcmac)
+  (_chk chkc   arcc)
+  (_chk chkev  arcev))
 
 (defun chkerr (str)
   (chk (handler-case (arcev (arc-read-form str))

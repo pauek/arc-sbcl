@@ -403,7 +403,7 @@
 (defun aload (file)
   (with-open-file (f file) 
     (w/no-colon
-      (loop for x = (read f nil t)
+      (loop for x = (read f nil nil)
 	 while x
 	 do (arcev x))
       t)))

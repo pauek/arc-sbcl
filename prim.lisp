@@ -53,15 +53,14 @@
 (defprim cons (a b)
   (cons a b))
 
-(defprim car (x)
-  (cond ((null x) nil)
-	((consp x) (car x))
-	(t (error "Error can't take car of ~a" x))))
-
-(defprim cdr (x)
-  (cond ((null x) nil)
-	((consp x) (cdr x))
-	(t (error "Error can't take cdr of ~a" x))))
+(macrolet ((_def (fn)
+	     `(defprim ,fn (x)
+		(cond ((null x) nil)
+		      ((consp x) (,fn x))
+		      (t (error "Error can't take the ~a of ~a"
+				',fn x))))))
+  (_def car)
+  (_def cdr))
 
 (defprim scar (x val)
   (if (stringp x) 

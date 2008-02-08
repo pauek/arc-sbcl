@@ -92,7 +92,7 @@
 
 (defun sym-list (pargs &optional acum)
   (if (null pargs)
-      acum
+      (nreverse acum)
       (ecase (caar pargs)
 	((:nrm :opt)
 	 (sym-list (cdr pargs) (cons (cadar pargs) acum)))
@@ -115,8 +115,9 @@
   (_pass sb-impl::backq-list*)
   (_pass sb-impl::backq-cons)
   (_pass sb-impl::backq-comma)
-  (_pass sb-impl::backq-append))
-
+  (_pass sb-impl::backq-append)
+  (_pass sb-impl::backq-comma-at)
+  (_pass sb-impl::backq-comma-dot))
 
 ;;; Macro expansion
 
@@ -189,7 +190,7 @@
 	       (characterp a))))
     (cond ((_literal? x) x)
 	  ((env? x) x)
-	  (t `(%symval ',x)))))
+	  (t (%sym x)))))
 
 (defmethod wif ((wkr c) rest)
   (labels ((_if (args)
@@ -237,13 +238,20 @@
 			  (:opt `(&optional ,(cdar x) ,@acum))
 			  (:des `((&optional 
 				   ,@(_rmv-opt (_rbld (reverse (cadar x)))))
-				  ,@acum)))))))
-    (let ((args (gensym))
-	  (body `((declare (ignorable ; Avoid SBCL warn.
-			    ,@(sym-list arg-list))) 
-		  ,@_body)))
-      `(lambda (&rest ,args)
-	 ,(%arc-destructure arg-list args body)))))
+				  ,@acum))))))
+	   (_normal? ()
+	     (every #'(lambda (x) (eq (car x) :nrm)) 
+		    arg-list)))
+    (if (_normal?)
+	`(lambda ,(sym-list arg-list)
+	   (declare (ignorable ,@(sym-list arg-list)))
+	   ,@_body)
+	(let ((args (gensym))
+	      (body `((declare (ignorable ; Avoid SBCL warn.
+				,@(sym-list arg-list))) 
+		      ,@_body)))
+	  `(lambda (&rest ,args)
+	     ,(%arc-destructure arg-list args body))))))
 
 (defmethod wset ((wkr c) pairs)
   (labels ((_pair (p)

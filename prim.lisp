@@ -408,8 +408,9 @@
 	     (loop for x = (read _in nil nil)
 		while x
 		do (let ((lisp (arcc x)))
+		     (format t "~s~%~%" lisp)
 		     (%arcev lisp)
-		     (format out "~a~%~%" lisp))))))
+		     (finish-output out))))))
     (let ((outname (format nil "~a.lisp" inname)))
       (with-open-file (in inname)
 	(with-open-file (out outname 

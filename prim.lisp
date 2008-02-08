@@ -46,7 +46,7 @@
 (defprim ssyntax (x)
   (%ssyntax? x))
 
-(defprim expand-syntax (x)
+(defprim ssexpand (x)
   (%expand-syntax x))
 
 (defparameter $sig (make-hash-table :test #'equal))

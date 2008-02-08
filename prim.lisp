@@ -43,6 +43,9 @@
 (defprim bound (x)
   (%boundp x))
 
+(defprim ssyntax (x)
+  (%ssyntax? x))
+
 (defparameter $sig (make-hash-table :test #'equal))
 
 ;; cons, car, cdr...

@@ -392,9 +392,14 @@
     (let ((paths (cl-fad:list-directory path)))
       (mapcar #'_name paths))))
 
-;file-exists
-;dir-exists
-;rmfile
+(defprim file-exists (path)
+  (cl-fad:file-exists-p path))
+
+(defprim dir-exists (path)
+  (cl-fad:directory-exists-p path))
+
+(defprim rmfile (path)
+  (delete-file path))
 
 ;; Arc
 

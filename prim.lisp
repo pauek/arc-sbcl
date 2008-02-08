@@ -171,7 +171,7 @@
 
 ;; Strings
 
-(defprim newstring (n ch)
+(defprim newstring (n &optional (ch (code-char 0)))
   (make-string n :initial-element ch))
 
 ;; Gensyms
@@ -196,6 +196,7 @@
 (defprim outfile (file &rest args)
   (open file 
 	:direction :output 
+	:if-does-not-exist :create
 	:if-exists (if (equal args '(append))
 		       :append
 		       :overwrite)))
@@ -395,7 +396,9 @@
 			(set '_that val)
 			(set '_thatexpr expr)
 			(terpri))))))))
-    (format t "Use (quit) to quit, (tl) to return here after an interrupt.~%")
+    (format t "~a~a" 
+	    "Use (quit) to quit, (repl) to "
+	    "return here after an interrupt.~%")
     (loop
        (handler-case (_repl)
 	 (error (e) (format t "Error: ~a~%" e))))))

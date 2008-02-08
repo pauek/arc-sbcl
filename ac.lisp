@@ -118,7 +118,7 @@
   (_pass sb-impl::backq-comma-at)
   (_pass sb-impl::backq-comma-dot))
 
-;;; Macro expansion
+;;; Macro expansion + special syntax
 
 (defwalker mac (arc))
 

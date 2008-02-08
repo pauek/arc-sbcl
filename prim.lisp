@@ -377,7 +377,8 @@
   nil)
 
 (defprim pipe-from (cmd)
-  (let ((p (run-program "/bin/sh" (list "-c" cmd))))
+  (let ((p (run-program "/bin/sh" (list "-c" cmd) 
+			:output :stream)))
     (process-output p)))
 
 (defprim protect (during after)
@@ -443,9 +444,9 @@
 			(set '_that val)
 			(set '_thatexpr expr)
 			(terpri))))))))
-    (format t "~a~a" 
+    (format t "~a~a~%" 
 	    "Use (quit) to quit, (repl) to "
-	    "return here after an interrupt.~%")
+	    "return here after an interrupt.")
     (loop
        (handler-case (_repl)
 	 (error (e) (format t "Error: ~a~%" e))))))

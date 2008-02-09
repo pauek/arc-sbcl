@@ -30,8 +30,7 @@
 
 (defwgeneric arc-set (pairs)
   (:wmethod t (pairs) 
-    (flet ((_2list (p)
-	     (list (car p) (cdr p))))
+    (flet ((_2list (p) (list (car p) (cdr p))))
       `(set ,@(mapcan #'_2list pairs)))))
 
 (defwgeneric arc-call (head rest)
@@ -58,7 +57,7 @@
     (arc-set (_pairs rest))))
 
 (defwlist if arc (rest) 
-  (arc-if (mapcar #'walk rest)))
+  (arc-if rest))
 
 (defun sym-list (pargs &optional acum)
   (if (null pargs)
@@ -163,6 +162,9 @@
       (walk (%expand-syntax form))
       form))
 
+(defwmethod arc-if mac (rest)
+  `(if ,@(mapcar #'walk rest)))
+
 (defwmethod arc-set mac (pairs)
   (labels ((_pair (p)
 	     (destructuring-bind (place . val) p
@@ -213,9 +215,9 @@
 (defwmethod arc-if c (rest)
   (labels ((_if (args)
 	     (cond ((null args) nil)
-		   ((null (cdr args)) (car args))
-		   (t `(if ,(car args)
-			   ,(cadr args)
+		   ((null (cdr args)) (walk (car args)))
+		   (t `(if ,(walk (car args))
+			   ,(walk (cadr args))
 			   ,(_if (cddr args)))))))
     (_if rest)))
 

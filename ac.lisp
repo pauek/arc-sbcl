@@ -106,7 +106,6 @@
 (defwmethod list arc (head rest)
   (arc-call head rest))
 
-
 ;;; SBCL backquote
 (macrolet ((_pass (what)
 	     `(defwlist ,what arc (rest)
@@ -168,7 +167,7 @@
       (walk (%expand-syntax form))
       form))
 
-(defwmethod list mac (head rest)
+(defwmethod arc-call mac (head rest)
   (flet ((_macro? (x)
 	   (when (symbolp x)
 	     (let ((fn (%symval x)))
@@ -176,7 +175,6 @@
 		 (%rep fn))))))
     (let ((m (_macro? head)))
       (if m 
-	  ; (if once? (apply m rest) ...)
 	  (walk (apply m rest))
 	  (cons (walk head) (mapcar #'walk rest))))))
 

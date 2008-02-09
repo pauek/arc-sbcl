@@ -278,10 +278,10 @@
 ;;; arcme & arcc & arcev
 
 (defun arcmac (form)
-  (walk 'mac form))
+  (dowalk 'mac form))
 
 (defun arcc (form)
-  (walk 'c (arcmac form)))
+  (dowalk 'c (arcmac form)))
 
 (defun %arcev (form)
   (flet ((_ign-warn (condition)

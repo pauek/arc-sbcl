@@ -28,7 +28,7 @@
     (chkmac '(fn ((o x -1)) (+ x 5)) "(fn ((o x -1)) (+ x 5))")
     (chkmac '(fn ((o i (oh! 1 2))) i) "(fn ((o i (o 1 2))) i)")
     (chkmac '(fn (a b) (progn a b)) "(fn (a b) (do a b))")
-    (chkmac '5 "((fn ((o y)) (set (x) 5) y))")))
+    (chkev 5 "((fn ((o y)) (set (x) 5) y))")))
 
 (deftest m-nested
   (with-mac ((do (&rest b) `(progn ,@b)))

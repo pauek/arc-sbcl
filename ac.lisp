@@ -51,14 +51,10 @@
 (defwlist set arc (rest)
   (labels ((_pairs (lst)
 	     (cond ((null lst) nil)
-		   ((not (symbolp (car lst)))
-		    (error "First argument to set must be a symbol [~a]" 
-			   (car lst)))
 		   ((consp (cdr lst))
-		    (cons (cons (car lst) (walk (cadr lst)))
+		    (cons (cons (car lst) (cadr lst))
 			  (_pairs (cddr lst))))
-		   (t 
-		    (error "Odd number of arguments to set")))))
+		   (t (error "Odd number of arguments to set")))))
     (arc-set (_pairs rest))))
 
 (defwlist if arc (rest) 
@@ -167,6 +163,12 @@
       (walk (%expand-syntax form))
       form))
 
+(defwmethod arc-set mac (pairs)
+  (labels ((_pair (p)
+	     (destructuring-bind (place . val) p
+	       (list (walk place) (walk val)))))
+    `(set ,@(mapcan #'_pair pairs))))
+
 (defwmethod arc-call mac (head rest)
   (flet ((_macro? (x)
 	   (when (symbolp x)
@@ -273,9 +275,13 @@
 (defwmethod arc-set c (pairs)
   (labels ((_pair (p)
 	     (destructuring-bind (place . val) p
-	       (if (env? place)
-		   `(setf ,place ,val)
-		   `(setf ,(%sym place) ,val)))))
+	       (let ((v (walk val)))
+		 (unless (symbolp place)
+		   (error "First argument to set must be a symbol [~a]" 
+			  place))
+		 (if (env? place)
+		     `(setf ,place ,v)
+		     `(setf ,(%sym place) ,v))))))
     `(progn ,@(mapcar #'_pair pairs))))
 
 (defwmethod arc-call c (head rest)

@@ -36,7 +36,7 @@
 
 (defwgeneric arc-call (head rest)
   (:wmethod t (head rest)
-    `(,head ,@rest)))
+    `(,(walk head) ,@(mapcar #'walk rest))))
 
 (defvar *env* nil)
 (defun env? (x) (member x *env*))
@@ -104,7 +104,7 @@
     (arc-fn argl body)))
 
 (defwmethod list arc (head rest)
-  (arc-call (walk head) (mapcar #'walk rest)))
+  (arc-call head rest))
 
 
 ;;; SBCL backquote
@@ -269,11 +269,13 @@
     `(progn ,@(mapcar #'_pair pairs))))
 
 (defwmethod arc-call c (head rest)
-  (let ((len (length rest)))
+  (let ((_head (walk head))
+	(_rest (mapcar #'walk rest)))
+  (let ((len (length _rest)))
     (cond ((<= 0 len 4) 
-	   `(,(%sym (format nil "FUNCALL~a" len)) ,head ,@rest))
+	   `(,(%sym (format nil "FUNCALL~a" len)) ,_head ,@_rest))
 	  (t 
-	   `($apply ,head (list ,@rest))))))
+	   `($apply ,_head (list ,@_rest)))))))
 
 ;;; arcme & arcc & arcev
 
@@ -285,8 +287,8 @@
 
 (defun %arcev (form)
   (flet ((_ign-warn (condition)
-	   ;; Avoid SBCL warnings for global symbols
 	   (declare (ignore condition))
+	   ;; Avoid SBCL warnings for global symbols
 	   (muffle-warning))) 
     (handler-bind ((warning #'_ign-warn))
       (eval form))))

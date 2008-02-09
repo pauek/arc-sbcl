@@ -13,20 +13,21 @@
 (defwgeneric arc-if (rest)
   (:wmethod t (rest) `(if ,@rest)))
 
+(defun %rebuild-args (a &optional acum)
+  (if (null a) acum
+      (%rebuild-args 
+       (cdr a)
+       (ecase (caar a)
+	 (:rst (cadar a))
+	 (:nrm (cons (cadar a) acum))
+	 (:opt (cons `(o ,@(cdar a)) acum))
+	 (:des (cons (%rebuild-args (reverse (cadar a)))
+		     acum))))))
+
 (defwgeneric arc-fn (arg-list body)
   (:wmethod t (arg-list body)
-    (labels ((_rbld (x &optional acum)
-	       (flet ((_rcr (a)
-			(_rbld (cdr x) a)))
-		 (if (null x) acum
-		     (_rbld (cdr x)
-			    (ecase (caar x)
-			      (:rst (cadar x))
-			      (:nrm (cons (cadar x) acum))
-			      (:opt (cons `(o ,@(cdar x)) acum))
-			      (:des (cons (_rbld (reverse (cadar x)))
-					  acum))))))))
-      `(fn ,(_rbld (reverse arg-list)) ,@body))))
+    (labels ()
+      `(fn ,(%rebuild-args (reverse arg-list)) ,@body))))
 
 (defwgeneric arc-set (pairs)
   (:wmethod t (pairs) 
@@ -75,11 +76,11 @@
 			(append (sym-list (cadar pargs))
 				acum))))))
 
-(defwfun parse-args (args &optional acum o?)
+(defwfun %parse-args (args &optional acum o?)
   (flet ((_opt? (x)
 	   (and (consp x) (eq (car x) 'o)))
 	 (_recur (ac+ o?)
-	   (parse-args (cdr args) (cons ac+ acum) o?)))
+	   (%parse-args (cdr args) (cons ac+ acum) o?)))
     (cond ((null args) (nreverse acum))
 	  ((symbolp args) 
 	   (nreverse (cons `(:rst ,args) acum)))
@@ -92,13 +93,13 @@
 			(_recur `(:opt ,(cadr a) ,val) t))))
 		   (o? (error "Optional argument followed by non-optional"))
 		   ((consp a) 
-		    (_recur `(:des ,(parse-args a)) nil))
+		    (_recur `(:des ,(%parse-args a)) nil))
 		   ((symbolp a)
 		    (_recur `(:nrm ,a) nil))
 		   (t (error "Error parsing args"))))))))
 
 (defwlist fn arc (rest)
-  (let* ((argl (parse-args (car rest)))
+  (let* ((argl (%parse-args (car rest)))
 	 (body (w/env+ (sym-list argl)
 		 (mapcar #'walk (cdr rest)))))
     (arc-fn argl body)))
@@ -180,6 +181,18 @@
 
 ;;; Continuation passing style
 
+(defwalker cps (arc))
+
+(defvar *cc* #'identity)
+
+(defmacro w/cc+ (code &body body)
+  `(let* ((cc   *cc*)
+	  (*cc* (lambda (_) 
+		  (funcall cc ,code))))
+     ,@body))
+
+; (defwmethod arc-fn c (arg-list body)
+  
 
 
 ;;; Compilation

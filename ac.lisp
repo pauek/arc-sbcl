@@ -11,17 +11,7 @@
 ;;; Base arc walker
 
 
-(defun %rebuild-args (args)
-  (labels ((_rb (a &optional acum)
-	     (if (null a) acum
-		 (_rb (cdr a)
-		      (ecase (caar a)
-			(:rst (cadar a))
-			(:nrm (cons (cadar a) acum))
-			(:opt (cons `(o ,@(cdar a)) acum))
-			(:des (cons (_rb (reverse (cadar a)))
-				    acum)))))))
-    (_rb (reverse args))))
+
 
 (defwgeneric arc-if (rest))
 (defwgeneric arc-fn (arg-list body))
@@ -156,6 +146,18 @@
 	     (destructuring-bind (place . val) p
 	       (list (walk place) (walk val)))))
     `(set ,@(mapcan #'_pair pairs))))
+
+(defun %rebuild-args (args)
+  (labels ((_rb (a &optional acum)
+	     (if (null a) acum
+		 (_rb (cdr a)
+		      (ecase (caar a)
+			(:rst (cadar a))
+			(:nrm (cons (cadar a) acum))
+			(:opt (cons `(o ,@(cdar a)) acum))
+			(:des (cons (_rb (reverse (cadar a)))
+				    acum)))))))
+    (_rb (reverse args))))
 
 (defwmethod arc-fn mac (arg-list _body)
   (labels ((_warg (a)

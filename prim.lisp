@@ -425,7 +425,8 @@
 ; details
 
 (defprim macex1 (e)
-  (%macex (new-walker 'mac) (car e) (cdr e) t))
+  (declare (ignore e))
+  #+null (%macex (new-walker 'mac) (car e) (cdr e) t))
 
 (defprim macex (e)
   (arcmac e))

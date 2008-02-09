@@ -10,11 +10,11 @@
 
 ;;; Base arc walker
 
-(defgeneric wif (+wkr+ rest)
-  (:method (+wkr+ rest) `(if ,@rest)))
+(defwgeneric arc-if (rest)
+  (:wmethod t (rest) `(if ,@rest)))
 
-(defgeneric wfn (+wkr+ arg-list body)
-  (:method (+wkr+ arg-list body)
+(defwgeneric arc-fn (arg-list body)
+  (:wmethod t (arg-list body)
     (labels ((_rbld (x &optional acum)
 	       (flet ((_rcr (a)
 			(_rbld (cdr x) a)))
@@ -28,31 +28,27 @@
 					  acum))))))))
       `(fn ,(_rbld (reverse arg-list)) ,@body))))
 
-(defgeneric wset (+wkr+ pairs)
-  (:method (+wkr+ pairs) 
+(defwgeneric arc-set (pairs)
+  (:wmethod t (pairs) 
     (flet ((_2list (p)
 	     (list (car p) (cdr p))))
       `(set ,@(mapcan #'_2list pairs)))))
 
-(defgeneric wfuncall (+wkr+ head rest)
-  (:method (+wkr+ head rest)
+(defwgeneric arc-call (head rest)
+  (:wmethod t (head rest)
     `(,head ,@rest)))
 
 (defvar *env* nil)
-
-(defun env? (x)
-  (member x *env*))
+(defun env? (x) (member x *env*))
+(defmacro w/env+ (val &body body)
+  `(let ((*env* (append ,val *env*))) ,@body))
 
 (defwalker arc)
 
-(defwalk arc list (head rest)
-  (let ((wrest (mapcar #'walk rest)))
-    (wfuncall +wkr+ (walk head) wrest)))
-
-(defwalk/sp arc quote (rest) 
+(defwlist quote arc (rest)
   `(quote ,@rest))
 
-(defwalk/sp arc set (rest)
+(defwlist set arc (rest)
   (labels ((_pairs (lst)
 	     (cond ((null lst) nil)
 		   ((not (symbolp (car lst)))
@@ -63,31 +59,10 @@
 			  (_pairs (cddr lst))))
 		   (t 
 		    (error "Odd number of arguments to set")))))
-    (wset +wkr+ (_pairs rest))))
+    (arc-set (_pairs rest))))
 
-(defwalk/sp arc if (rest) 
-  (wif +wkr+ (mapcar #'walk rest)))
-
-(defun parse-args (+wkr+ args &optional acum o?)
-  (flet ((_opt? (x)
-	   (and (consp x) (eq (car x) 'o)))
-	 (_recur (ac+ o?)
-	   (parse-args +wkr+ (cdr args) (cons ac+ acum) o?)))
-    (cond ((null args) (nreverse acum))
-	  ((symbolp args) 
-	   (nreverse (cons `(:rst ,args) acum)))
-	  ((consp args)
-	   (let ((a (car args)))
-	     (cond ((_opt? a) 
-		    (let* ((*env* (append (sym-list acum) *env*))
-			   (val (when (caddr a) (wform +wkr+ (caddr a)))))
-		      (_recur `(:opt ,(cadr a) ,val) t)))
-		   (o? (error "Optional argument followed by non-optional"))
-		   ((consp a) 
-		    (_recur `(:des ,(parse-args +wkr+ a)) nil))
-		   ((symbolp a)
-		    (_recur `(:nrm ,a) nil))
-		   (t (error "Error parsing args"))))))))
+(defwlist if arc (rest) 
+  (arc-if (mapcar #'walk rest)))
 
 (defun sym-list (pargs &optional acum)
   (if (null pargs)
@@ -100,15 +75,41 @@
 			(append (sym-list (cadar pargs))
 				acum))))))
 
-(defwalk/sp arc fn (rest)
-  (let* ((argl (parse-args +wkr+ (car rest)))
-	 (body (let ((*env* (append (sym-list argl) *env*)))
+(defwfun parse-args (args &optional acum o?)
+  (flet ((_opt? (x)
+	   (and (consp x) (eq (car x) 'o)))
+	 (_recur (ac+ o?)
+	   (parse-args (cdr args) (cons ac+ acum) o?)))
+    (cond ((null args) (nreverse acum))
+	  ((symbolp args) 
+	   (nreverse (cons `(:rst ,args) acum)))
+	  ((consp args)
+	   (let ((a (car args)))
+	     (cond ((_opt? a) 
+		    (w/env+ (sym-list acum)
+		      (let ((val (when (caddr a) 
+				   (walk (caddr a))))) ;; <--
+			(_recur `(:opt ,(cadr a) ,val) t))))
+		   (o? (error "Optional argument followed by non-optional"))
+		   ((consp a) 
+		    (_recur `(:des ,(parse-args a)) nil))
+		   ((symbolp a)
+		    (_recur `(:nrm ,a) nil))
+		   (t (error "Error parsing args"))))))))
+
+(defwlist fn arc (rest)
+  (let* ((argl (parse-args (car rest)))
+	 (body (w/env+ (sym-list argl)
 		 (mapcar #'walk (cdr rest)))))
-    (wfn +wkr+ argl body)))
+    (arc-fn argl body)))
+
+(defwmethod list arc (head rest)
+  (arc-call (walk head) (mapcar #'walk rest)))
+
 
 ;;; SBCL backquote
 (macrolet ((_pass (what)
-	     `(defwalk/sp arc ,what (rest)
+	     `(defwlist ,what arc (rest)
 		`(,',what ,@(mapcar #'walk rest)))))
   (_pass sb-impl::backq-list)
   (_pass sb-impl::backq-list*)
@@ -162,28 +163,22 @@
 	  (car elts)
 	  (cons 'compose elts)))))
 
-(defwalk mac atom (form)
+(defwmethod atom mac (form)
   (if (%ssyntax? form)
       (walk (%expand-syntax form))
       form))
 
-(defun %macex (+wkr+ head rest &optional once?)
-  (flet ((_walk (f)
-	   (wform +wkr+ f))
-	 (_macro? (x)
+(defwmethod list mac (head rest)
+  (flet ((_macro? (x)
 	   (when (symbolp x)
 	     (let ((fn (%symval x)))
 	       (when (%tag? 'mac fn)
 		 (%rep fn))))))
     (let ((m (_macro? head)))
       (if m 
-	  (if once?
-	      (apply m rest)
-	      (_walk (apply m rest)))
-	  (cons (_walk head) (mapcar #'_walk rest))))))
-
-(defwalk mac list (head rest)
-  (%macex +wkr+ head rest))
+	  ; (if once? (apply m rest) ...)
+	  (walk (apply m rest))
+	  (cons (walk head) (mapcar #'walk rest))))))
 
 ;;; Continuation passing style
 
@@ -193,7 +188,7 @@
 
 (defwalker c (arc))
 
-(defwalk c atom (x)
+(defwmethod atom c (x)
   (flet ((_literal? (a)
 	   (or (null a) (eq a t)
 	       (numberp a)
@@ -203,7 +198,7 @@
 	  ((env? x) x)
 	  (t (%sym x)))))
 
-(defmethod wif ((+wkr+ c) rest)
+(defwmethod arc-if c (rest)
   (labels ((_if (args)
 	     (cond ((null args) nil)
 		   ((null (cdr args)) (car args))
@@ -230,7 +225,7 @@
       `(let* (,@(reverse acum))
 	 ,@body))))
        
-(defmethod wfn ((+wkr+ c) arg-list _body)
+(defwmethod arc-fn c (arg-list _body)
   (labels ((_rmv-opt (lst)
 	     (remove '&optional lst))
 	   (_rmv-dup-opts (lst)
@@ -265,7 +260,7 @@
 	  `(lambda (&rest ,args)
 	     ,(%arc-destructure arg-list args body))))))
 
-(defmethod wset ((+wkr+ c) pairs)
+(defwmethod arc-set c (pairs)
   (labels ((_pair (p)
 	     (destructuring-bind (place . val) p
 	       (if (env? place)
@@ -273,9 +268,8 @@
 		   `(setf ,(%sym place) ,val)))))
     `(progn ,@(mapcar #'_pair pairs))))
 
-(defmethod wfuncall ((+wkr+ c) head rest)
+(defwmethod arc-call c (head rest)
   (let ((len (length rest)))
-    (assert (not (%tag? 'mac head)))
     (cond ((<= 0 len 4) 
 	   `(,(%sym (format nil "FUNCALL~a" len)) ,head ,@rest))
 	  (t 

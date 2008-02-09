@@ -58,6 +58,7 @@
   (chkerr "(set #\a 1)")
   (chkerr "(set \"h\" 'a)")
   (chkev 5 "((fn () (set x 5) x))")
+  (chkev '(-3 . -3) "((fn ((o a) (o b)) (set a -3 b a) (cons a b)))")
   (chkev #\a "((fn (x) (set x #\\a) x) #\\z)")
   (chkev 1   "((fn ((o x)) (set x 1) x))")
   (chkev 2   "((fn ((o x 5)) ((fn ((o x 2)) x))))")

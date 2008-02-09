@@ -10,8 +10,6 @@
 
 ;;; Base arc walker
 
-(defwgeneric arc-if (rest)
-  (:wmethod t (rest) `(if ,@rest)))
 
 (defun %rebuild-args (args)
   (labels ((_rb (a &optional acum)
@@ -25,18 +23,10 @@
 				    acum)))))))
     (_rb (reverse args))))
 
-(defwgeneric arc-fn (arg-list body)
-  (:wmethod t (arg-list body)
-    `(fn ,(%rebuild-args arg-list) ,@body)))
-
-(defwgeneric arc-set (pairs)
-  (:wmethod t (pairs) 
-    (flet ((_2list (p) (list (car p) (cdr p))))
-      `(set ,@(mapcan #'_2list pairs)))))
-
-(defwgeneric arc-call (head rest)
-  (:wmethod t (head rest)
-    `(,(walk head) ,@(mapcar #'walk rest))))
+(defwgeneric arc-if (rest))
+(defwgeneric arc-fn (arg-list body))
+(defwgeneric arc-set (pairs))
+(defwgeneric arc-call (head rest))
 
 (defvar *env* nil)
 (defun env? (x) (member x *env*))

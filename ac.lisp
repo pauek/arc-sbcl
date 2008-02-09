@@ -26,8 +26,7 @@
 
 (defwgeneric arc-fn (arg-list body)
   (:wmethod t (arg-list body)
-    (labels ()
-      `(fn ,(%rebuild-args (reverse arg-list)) ,@body))))
+    `(fn ,(%rebuild-args (reverse arg-list)) ,@body)))
 
 (defwgeneric arc-set (pairs)
   (:wmethod t (pairs) 

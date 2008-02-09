@@ -170,7 +170,7 @@
 (defwmethod arc-fn mac (arg-list _body)
   (labels ((_warg (a)
 	     (if (eq :opt (car a))
-		 `(:opt ,(cadr a) ,(when (caddr a) (walk (caddr a))))
+		 `(:opt ,(cadr a) ,(walk (caddr a)))
 		 a)))
     `(fn ,(%rebuild-args (mapcar #'_warg arg-list)) 
 	 ,@(mapcar #'walk _body))))

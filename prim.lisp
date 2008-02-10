@@ -20,7 +20,7 @@
 (defmacro defprim (name args &body body)
   (let ((_name (%sym name)))
     `(progn
-       (%add-prim ',_name)
+       (%add-prim ',name)
        (defun ,_name ,args ,@body)
        (defparameter ,_name #',_name))))
 

@@ -201,16 +201,9 @@
 		   (funcall cc _2))))
      ,@body))
 
-(defmacro cc-value (&body body)
-  `(multiple-value-bind (val fn) (progn ,@body)
-     (declare (ignore fn))
-     val))
-
 (defmacro cc-call (&body body)
   `(multiple-value-bind (val fn) (progn ,@body)
-     (if fn
-	 (funcall fn val)
-	 val)))
+     (if fn (funcall fn val) val)))
 
 #|
 (w/cc-in `(+ ,_ 1)
@@ -219,21 +212,21 @@
 |#
 
 (defwmethod atom cps (form)
-  form)
-
-
-(defwfun %seq (body)
-  (if (null (cdr body))
-      (return-cc (walk (car body)))
-      (w/cc-in `((fn (,(gensym)) ,_)
-	       ,(walk (car body)))
-	(%seq (cdr body)))))
+  (return-cc form))
 
 (defwmethod arc-fn cps (arg-list body)
-  (let* ((k (gensym))
-	 (body (w/cc-in `((,k ,_)) (%seq body))))
+  (labels ((_seq (body)
+	     (if (null (cdr body))
+		 (return-cc (walk (car body)))
+		 (w/cc-out `((,@_ ,(walk (car body))))
+		   (_seq (cdr body))))))
     (w/reset-cc
-      `(fn (,k ,@(%rebuild-args arg-list)) ,@body))))
+      (let* ((k (gensym))
+	     (body (cc-call 
+		     (w/cc-in `(,k ,_)
+		       (_seq (reverse body)))))
+	     (args (%rebuild-args arg-list)))
+	(return-cc `(fn (,k ,@args) ,body))))))
 
 
 (defwmethod arc-call cps (head rest)
@@ -246,7 +239,7 @@
 	     (_call (args acum)
 	       (if (null args) 
 		   (_ret acum)
-		   (let ((val (cc-value (walk (car args)))))
+		   (let ((val (walk (car args))))
 		     (_call (cdr args)
 			    (cons val acum))))))
       (if (%prim? head)

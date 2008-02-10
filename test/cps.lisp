@@ -41,7 +41,7 @@
 		(+ 1 (- 2 #:k2)))
 	    (sqrt x))
 	  "(+ 1 (- 2 (hi (sqrt x))))")
-  (chkcps '(fn (#:k x f) (f #:k (+ 1 x)))
+  (chkcps '(fn (#:k x f) (f (fn (#:r1) (#:k #:r1)) (+ 1 x)))
 	  "(fn (x f) (f (+ 1 x)))")
   (chkcps '(b (fn (#:r1) (a (fn (#:r2) #:r2) #:r1)) x)
 	  "(a (b x))")

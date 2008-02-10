@@ -30,7 +30,8 @@
      (:file "util")
      (:file "ac")
      (:file "mac")
-     (:file "prim"))
+     (:file "prim")
+     (:file "cps"))
     :serial t))
 
   :depends-on (:arc)

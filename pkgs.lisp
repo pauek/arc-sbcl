@@ -11,6 +11,7 @@
 	:sb-bsd-sockets
 	:pk-walk)
   (:export :arcmac
+	   :arccps
 	   :arcc
 	   :arcev
 	   :w/no-colon

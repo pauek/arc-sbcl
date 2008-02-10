@@ -247,6 +247,28 @@
 	  (w/cc-out `(,head (fn (,k) ,_) ,@args)
 	    (_call (reverse rest) nil))))))
 
+(defwmethod arc-if cps (rest)
+  (w/reset-cc
+    (let (preds branches tail)
+      (flet ((_wbr (b)
+	       (w/reset-cc
+		 (cc-call (walk b))))
+	     (_destr ()
+	       (loop for (p b) on rest by #'cddr
+		  do (if (null b)
+			 (setf tail p)
+			 (setf preds (cons p preds)
+			       branches (cons b branches))))))
+	(_destr)
+	(let* ((wbranches (mapcar #'_wbr branches)))
+	  (labels ((_clauses (pred branch acum)
+		     (if (null pred)
+			 (return-cc `(if ,@acum ,tail))
+			 (let ((pr (walk (car pred))))
+			   (_clauses (cdr pred) (cdr branch)
+				     (append (list pr (car branch)) 
+					     acum))))))
+	     (cc-call (_clauses preds wbranches nil))))))))
 
 ;;; Compilation
 

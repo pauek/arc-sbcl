@@ -28,13 +28,15 @@
 	  "(fn (x) (+ 1 (sqrt x)))"))
 
 (deftest c-if
-  (chkcps '(fn (#:k x) (if (< x 0) (#:k 0) (#:k 1)))
-	  "(fn (x) (if (< x 0) 0 1))")
-  (chkcps '(fn (#:k x) 
-	    (if (< x 0) 
-		(hi (fn (#:r1) (#:k #:r1)) 5) 
-		(#:k x)))
-	  "(fn (x) (if (< x 0) (hi 5) x))"))
+  (chkcps '(if (< x 0) 0 1) "(if (< x 0) 0 1)")
+  (chkcps '(a (fn (#:r1) (if #:r1 x y)) 1)
+	  "(if (a 1) x y)")
+  (chkcps '(a (fn (#:r1) (b (fn (#:r2) (if #:r1 x #:r2 y z)) 2)) 1)
+	  "(if (a 1) x (b 2) y z)")
+  (chkcps '(if (< x 0) 
+	       (hi (fn (#:r1) #:r1) 5) 
+	       x)
+	  "(if (< x 0) (hi 5) x)"))
 
 (deftest c-funcall
   (chkcps '(hi (fn (#:k2)

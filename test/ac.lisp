@@ -92,13 +92,3 @@
 
 (deftest t-error
   (chkerr "(err \"This is an error\")"))
-
-  ;; (chkerr "('(1 2 3) 3)") ; In mzscheme this is an error
-
-; TODO: t-coerce
-
-#|
-(deftest t-compose
-  (chkc '((compose a b c) 1) ; ??
-	"(a:b:c 1)"))
-|#

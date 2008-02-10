@@ -10,9 +10,6 @@
 
 ;;; Base arc walker
 
-
-
-
 (defwgeneric arc-if (rest))
 (defwgeneric arc-fn (arg-list body))
 (defwgeneric arc-set (pairs))
@@ -190,9 +187,39 @@
 		  (funcall cc ,code))))
      ,@body))
 
-; (defwmethod arc-fn c (arg-list body)
-  
+(defmacro w/reset-cc (&body body)
+  `(let* ((*cc* #'identity)) ,@body))
 
+(defun use-ccode (x)
+  (prog1 (funcall *cc* x)
+    (setf *cc* #'identity)))
+
+(defwmethod atom cps (form)
+  form)
+
+(defwfun %seq (body)
+  (if (null (cdr body))
+      (use-ccode (walk (car body)))
+      (w/cc+ `((fn (,(gensym)) ,_)
+	       ,(walk (car body)))
+	(%seq (cdr body)))))
+
+(defwmethod arc-fn cps (arg-list body)
+  (let* ((k (gensym))
+	 (body (w/cc+ `((,k ,_)) (%seq body))))
+    (w/reset-cc
+      `(fn (,k ,@(%rebuild-args arg-list)) ,@body))))
+
+(defwmethod arc-call cps (head rest)
+  (labels ((_call (body &optional syms)
+	     (if (null body)
+		 (use-ccode `(,(walk head) ,@(nreverse syms)))
+		 (let ((k (gensym)))
+		   (w/cc+ `((fn (,k) ,_) ,(walk (car body)))
+		     (_call (cdr body) (cons k syms)))))))
+    (w/reset-cc 
+      (_call rest nil))))
+   
 
 ;;; Compilation
 
@@ -288,6 +315,9 @@
 
 (defun arcmac (form)
   (dowalk 'mac form))
+
+(defun arccps (form)
+  (dowalk 'cps form))
 
 (defun arcc (form)
   (dowalk 'c (arcmac form)))

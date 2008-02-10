@@ -181,45 +181,79 @@
 
 (defvar *cc* #'identity)
 
-(defmacro w/cc+ (code &body body)
-  `(let* ((cc   *cc*)
-	  (*cc* (lambda (_) 
-		  (funcall cc ,code))))
-     ,@body))
+(defun return-cc (x)
+  (values x *cc*))
 
 (defmacro w/reset-cc (&body body)
   `(let* ((*cc* #'identity)) ,@body))
 
-(defun use-ccode (x)
-  (prog1 (funcall *cc* x)
-    (setf *cc* #'identity)))
+(defmacro w/cc-in (code &body body)
+  `(let* ((cc   *cc*)
+	  (*cc* (lambda (_)
+		  (let ((res ,code))
+		    (if cc (funcall cc res) res)))))
+     ,@body))
+
+(defmacro w/cc-out (code &body body)
+  `(let* ((cc *cc*))
+     (setf *cc* (lambda (_2) 
+		  ((lambda (_) ,code)
+		   (funcall cc _2))))
+     ,@body))
+
+(defmacro cc-value (&body body)
+  `(multiple-value-bind (val fn) (progn ,@body)
+     (declare (ignore fn))
+     val))
+
+(defmacro cc-call (&body body)
+  `(multiple-value-bind (val fn) (progn ,@body)
+     (if fn
+	 (funcall fn val)
+	 val)))
+
+#|
+(w/cc-in `(+ ,_ 1)
+  (w/cc-out `(* ,_ 2)
+    (return-cc 'a)))
+|#
 
 (defwmethod atom cps (form)
   form)
 
+
 (defwfun %seq (body)
   (if (null (cdr body))
-      (use-ccode (walk (car body)))
-      (w/cc+ `((fn (,(gensym)) ,_)
+      (return-cc (walk (car body)))
+      (w/cc-in `((fn (,(gensym)) ,_)
 	       ,(walk (car body)))
 	(%seq (cdr body)))))
 
 (defwmethod arc-fn cps (arg-list body)
   (let* ((k (gensym))
-	 (body (w/cc+ `((,k ,_)) (%seq body))))
+	 (body (w/cc-in `((,k ,_)) (%seq body))))
     (w/reset-cc
       `(fn (,k ,@(%rebuild-args arg-list)) ,@body))))
 
+
 (defwmethod arc-call cps (head rest)
-  (labels ((_call (body &optional syms)
-	     (if (null body)
-		 (use-ccode `(,(walk head) ,@(nreverse syms)))
-		 (let ((k (gensym)))
-		   (w/cc+ `((fn (,k) ,_) ,(walk (car body)))
-		     (_call (cdr body) (cons k syms)))))))
-    (w/reset-cc 
-      (_call rest nil))))
-   
+  (let (args (k (gensym)))
+    (labels ((_ret (a)
+	       (if (%prim? head)
+		   (return-cc `(,head ,@a))
+		   (progn (setf args (reverse a))
+			  (return-cc k))))
+	     (_call (args acum)
+	       (if (null args) 
+		   (_ret acum)
+		   (let ((val (cc-value (walk (car args)))))
+		     (_call (cdr args)
+			    (cons val acum))))))
+      (if (%prim? head)
+	  (_call (reverse rest) nil)
+	  (w/cc-out `(,head (fn (,k) ,_) ,@args)
+	    (_call (reverse rest) nil))))))
+
 
 ;;; Compilation
 
@@ -319,7 +353,8 @@
   (dowalk 'mac form))
 
 (defun arccps (form)
-  (dowalk 'cps form))
+  (w/reset-cc
+    (cc-call (dowalk 'cps form))))
 
 (defun arcc (form)
   (dowalk 'c (arcmac form)))

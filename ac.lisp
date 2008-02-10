@@ -215,18 +215,22 @@
   (return-cc form))
 
 (defwmethod arc-fn cps (arg-list body)
-  (labels ((_seq (body)
-	     (if (null (cdr body))
-		 (return-cc (walk (car body)))
-		 (w/cc-out `((,@_ ,(walk (car body))))
-		   (_seq (cdr body))))))
+  (labels ((_seq (code last)
+	     (if (null code)
+		 (return-cc last)
+		 (w/cc-out (cons (walk (car code)) _)
+		   (_seq (cdr code) last)))))
     (w/reset-cc
+      ;; (format t "~a~%" body)
       (let* ((k (gensym))
-	     (body (cc-call 
-		     (w/cc-in `(,k ,_)
-		       (_seq (reverse body)))))
+	     (rbody (reverse body))
+	     (wbody (w/reset-cc
+		      (cc-call 
+			(w/cc-in `((,k ,_))
+			  (_seq (cdr rbody) 
+				(walk (car rbody)))))))
 	     (args (%rebuild-args arg-list)))
-	(return-cc `(fn (,k ,@args) ,body))))))
+	(return-cc `(fn (,k ,@args) ,@wbody))))))
 
 
 (defwmethod arc-call cps (head rest)

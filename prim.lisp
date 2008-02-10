@@ -9,9 +9,18 @@
 
 ;;; Primitives
 
+(defparameter *primitives* (make-hash-table))
+
+(defun %add-prim (x)
+  (setf (gethash (%sym x) *primitives*) t))
+
+(defun %prim? (x)
+  (gethash (%sym x) *primitives*))
+
 (defmacro defprim (name args &body body)
   (let ((_name (%sym name)))
     `(progn
+       (%add-prim ',_name)
        (defun ,_name ,args ,@body)
        (defparameter ,_name #',_name))))
 

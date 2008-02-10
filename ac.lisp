@@ -306,7 +306,9 @@
   (let ((_head (walk head))
 	(_rest (mapcar #'walk rest)))
   (let ((len (length _rest)))
-    (cond ((<= 0 len 4) 
+    (cond ((%prim? head)
+	   `(,(%sym head) ,@_rest))
+	  ((<= 0 len 4) 
 	   `(,(%sym (format nil "FUNCALL~a" len)) ,_head ,@_rest))
 	  (t 
 	   `($apply ,_head (list ,@_rest)))))))

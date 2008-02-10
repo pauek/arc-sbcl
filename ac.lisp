@@ -179,100 +179,17 @@
 
 (defwalker cps (arc))
 
-(defvar *cc* #'identity)
-
-(defun return-cc (x)
-  (values x *cc*))
-
-(defmacro w/reset-cc (&body body)
-  `(let* ((*cc* #'identity)) ,@body))
-
-(defmacro w/cc-in (code &body body)
-  `(let* ((cc   *cc*)
-	  (*cc* (lambda (_)
-		  (let ((res ,code))
-		    (if cc (funcall cc res) res)))))
-     ,@body))
-
-(defmacro w/cc-out (code &body body)
-  `(let* ((cc *cc*))
-     (setf *cc* (lambda (_2) 
-		  ((lambda (_) ,code)
-		   (funcall cc _2))))
-     ,@body))
-
-(defmacro cc-call (&body body)
-  `(multiple-value-bind (val fn) (progn ,@body)
-     (if fn (funcall fn val) val)))
-
-#|
-(w/cc-in `(+ ,_ 1)
-  (w/cc-out `(* ,_ 2)
-    (return-cc 'a)))
-|#
-
 (defwmethod atom cps (form)
-  (return-cc form))
+  form)
 
 (defwmethod arc-fn cps (arg-list body)
-  (labels ((_seq (code last)
-	     (if (null code)
-		 (return-cc last)
-		 (w/cc-out (cons (walk (car code)) _)
-		   (_seq (cdr code) last)))))
-    (w/reset-cc
-      ;; (format t "~a~%" body)
-      (let* ((k (gensym))
-	     (rbody (reverse body))
-	     (wbody (w/reset-cc
-		      (cc-call 
-			(w/cc-in `((,k ,_))
-			  (_seq (cdr rbody) 
-				(walk (car rbody)))))))
-	     (args (%rebuild-args arg-list)))
-	(return-cc `(fn (,k ,@args) ,@wbody))))))
-
+  nil)
 
 (defwmethod arc-call cps (head rest)
-  (let (args (k (gensym)))
-    (labels ((_ret (a)
-	       (if (%prim? head)
-		   (return-cc `(,head ,@a))
-		   (progn (setf args (reverse a))
-			  (return-cc k))))
-	     (_call (args acum)
-	       (if (null args) 
-		   (_ret acum)
-		   (let ((val (walk (car args))))
-		     (_call (cdr args)
-			    (cons val acum))))))
-      (if (%prim? head)
-	  (_call (reverse rest) nil)
-	  (w/cc-out `(,head (fn (,k) ,_) ,@args)
-	    (_call (reverse rest) nil))))))
+  nil)
 
 (defwmethod arc-if cps (rest)
-  (w/reset-cc
-    (let (preds branches tail)
-      (flet ((_wbr (b)
-	       (w/reset-cc
-		 (cc-call (walk b))))
-	     (_destr ()
-	       (loop for (p b) on rest by #'cddr
-		  do (if (null b)
-			 (setf tail p)
-			 (setf preds (cons p preds)
-			       branches (cons b branches))))))
-	(_destr)
-	(let* ((wbranches (mapcar #'_wbr branches)))
-	  (labels ((_clauses (pred branch acum)
-		     (if (null pred)
-			 (return-cc `(if ,@acum ,tail))
-			 (let ((pr (walk (car pred))))
-			   (_clauses (cdr pred) (cdr branch)
-				     (append (list pr (car branch)) 
-					     acum))))))
-	     (cc-call (_clauses preds wbranches nil))))))))
+  nil)
 
 ;;; Compilation
 
@@ -372,8 +289,7 @@
   (dowalk 'mac form))
 
 (defun arccps (form)
-  (w/reset-cc
-    (cc-call (dowalk 'cps form))))
+  (dowalk 'cps form))
 
 (defun arcc (form)
   (dowalk 'c (arcmac form)))

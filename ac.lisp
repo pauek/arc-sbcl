@@ -196,22 +196,19 @@
 	  (list *cursor*)
 	  (subseq form (1+ n))))
 
-; (%nsubst 3 '(1 2 3 4))
+(defwmethod atom cps (form)
+  form)
 
 (defwmethod arc-call cps (head rest)
   (let ((pos (position-if-not #'atom rest)))
     (cond (pos (w/cc+ (cons head (%set-cursor pos rest))
 		 (walk (nth pos rest))))
 	  ((%prim? head) 
-	   (cons head rest))
+	   (subst (cons head rest) *cursor* (ccode)))
 	  (t (let* ((k (gensym "K"))
 		    (c (subst k *cursor* (ccode)))
 		    (body (w/cc0 (walk c))))
 	       `(,head (fn (,k) ,body) ,@rest))))))
-	
-
-(defwmethod atom cps (form)
-  form)
 
 (defwmethod arc-fn cps (arg-list body)
   nil)

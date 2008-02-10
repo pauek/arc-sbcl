@@ -187,14 +187,19 @@
 (defmacro w/cc0 (&body body)
   `(let ((*cc* *cursor*)) ,@body))
 
-(defmacro ccode () '*cc*)
+;; (defmacro ccode () '*cc*)
+
+(defun cc-ret (form)
+  (subst form *cursor* *cc*))
+
+(defun %set-cursor (n f)
+  (append (subseq f 0 n) `(,*cursor*) (subseq f (1+ n))))
+
+(defun %subst-cursor (new)
+  (subst new *cursor* *cc*))
+
 
 (defwalker cps (arc))
-
-(defun %set-cursor (n form)
-  (append (subseq form 0 n)
-	  (list *cursor*)
-	  (subseq form (1+ n))))
 
 (defwmethod atom cps (form)
   form)
@@ -204,9 +209,9 @@
     (cond (pos (w/cc+ (cons head (%set-cursor pos rest))
 		 (walk (nth pos rest))))
 	  ((%prim? head) 
-	   (subst (cons head rest) *cursor* (ccode)))
+	   (cc-ret (cons head rest)))
 	  (t (let* ((k (gensym "K"))
-		    (c (subst k *cursor* (ccode)))
+		    (c (%subst-cursor k))
 		    (body (w/cc0 (walk c))))
 	       `(,head (fn (,k) ,body) ,@rest))))))
 

@@ -25,7 +25,17 @@
   (chkcps '(fn (#:k) a (#:k b))   "(fn () a b)")
   (chkcps '(fn (#:k) a b (#:k c)) "(fn () a b c)")
   (chkcps '(fn (#:k x) (#:k (+ 1 (sqrt x))))
-	  "(fn (x) (+ 1 (sqrt x)))"))
+	  "(fn (x) (+ 1 (sqrt x)))")
+  (chkcps '(fn (#:k) (a (fn (#:r) (#:k b)) 1))
+	  "(fn () (a 1) b)")
+  (chkcps '(fn (#:k) a (b (fn (#:r) (#:k c)) 1))
+	  "(fn () a (b 1) c)")
+  (chkcps '(fn (#:k) a (b (fn (#:r) c (#:k d)) 1))
+	  "(fn () a (b 1) c d)")
+  (chkcps '(fn (#:k) (a (fn (#:r) (#:k #:r)) 1))
+	  "(fn () (a 1))")
+  (chkcps '(fn (#:k) (a (fn (#:r1) (b (fn (#:r2) (#:k #:r2)) 2)) 1))
+	  "(fn () (a 1) (b 2))"))
 
 (deftest c-if
   (chkcps '(if (< x 0) 0 1) "(if (< x 0) 0 1)")

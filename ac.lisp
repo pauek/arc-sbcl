@@ -195,44 +195,36 @@
 
 (defparameter *cursor* (gensym "CUR"))
 
-(defvar *cc* *cursor*)
-
-(defmacro w/cc+ (code &body body)
-  `(let ((*cc* (subst ,code *cursor* *cc*))) ,@body))
-
-(defmacro w/cc0 (&body body)
-  `(let ((*cc* *cursor*)) ,@body))
-
-;; (defmacro ccode () '*cc*)
-
-(defun cc-ret (form)
-  (subst form *cursor* *cc*))
-
-(defun %set-cursor (n f)
+(defun %cset (n f)
   (append (subseq f 0 n) `(,*cursor*) (subseq f (1+ n))))
 
-(defun %subst-cursor (new)
-  (subst new *cursor* *cc*))
+(defun %csubs (cc new)
+  (subst new *cursor* cc))
 
 
-(def-arc-walker (arccps cps-))
+(def-arc-walker (%arccps cps-) cc)
 
-(defun cps-atom (e) e)
+(defun arccps (e &optional (cc *cursor*))
+  (%arccps e cc))
 
-(defun cps-call (head rest)
+(defun cps-atom (e cc) 
+  (declare (ignore cc))
+  e)
+
+(defun cps-call (head rest cc)
   (let ((pos (position-if-not #'atom rest)))
-    (cond (pos (w/cc+ (cons head (%set-cursor pos rest))
-		 (arccps (nth pos rest))))
-	  ((%prim? head) 
-	   (cc-ret (cons head rest)))
-	  (t (let* ((k (gensym "K"))
-		    (c (%subst-cursor k))
-		    (body (w/cc0 (arccps c))))
-	       `(,head (fn (,k) ,body) ,@rest))))))
+    (cond (pos 
+	   (arccps (nth pos rest)
+		   (%csubs cc `(,head ,@(%cset pos rest)))))
+	  ((%prim? head) (%csubs cc `(,head ,@rest)))
+	  (t (let* ((k (gensym "K")))
+	       `(,head (fn (,k) 
+			 ,(arccps (%csubs cc k)))
+		       ,@rest))))))
 
-(defun cps-fn (e) (declare (ignore e)))
-(defun cps-if (e) (declare (ignore e)))
-(defun cps-set (e) (declare (ignore e)))
+(defun cps-fn (e cc) (declare (ignore e cc)))
+(defun cps-if (e cc) (declare (ignore e cc)))
+(defun cps-set (e cc) (declare (ignore e cc)))
 
 ;;; Compilation
 

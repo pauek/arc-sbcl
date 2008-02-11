@@ -238,15 +238,20 @@
   (flet ((_cont? (s) (null (symbol-package s))))
     (let ((pos (position-if-not #'atom rest)))
       (cond ((eq head :do) (cps-do rest cc))
-	    (pos 
-	     (arccps (nth pos rest)
-		     (%csubs cc `(,head ,@(%cset pos rest)))))
+	    (pos
+	     (if (%prim? head)
+		 (arccps (nth pos rest)
+			 (%csubs cc `(,head ,@(%cset pos rest))))
+		 (let ((k (gensym "K")))
+		   (arccps (nth pos rest)
+			   `(,head (fn (,k) 
+				       ,@(%maybe-do (%csubs cc k)))
+				   ,@(%cset pos rest))))))
 	    ((or (%prim? head) (_cont? head))
 	     (%csubs cc `(,head ,@rest)))
 	    (t (let* ((k (gensym "K")))
 		 `(,head (fn (,k) 
-			     ,@(%maybe-do 
-				(arccps (%csubs cc k))))
+			     ,@(%maybe-do (%csubs cc k)))
 			 ,@rest)))))))
 
 (defun cps-fn (e cc)
@@ -261,8 +266,11 @@
 			,@(%maybe-do (arccps `(:do ,@_body) 
 					     `(,k ,*cursor*)))))))))
 
-(defun cps-if (e cc) (declare (ignore e cc)))
-(defun cps-set (e cc) (declare (ignore e cc)))
+(defun cps-if (e cc)
+  (declare (ignore e cc)))
+
+(defun cps-set (e cc) 
+  (declare (ignore e cc)))
 
 ;;; Compilation
 

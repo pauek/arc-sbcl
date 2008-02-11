@@ -8,8 +8,7 @@
 	:sb-gray 
 	:sb-ext 
 	:sb-thread
-	:sb-bsd-sockets
-	:pk-walk)
+	:sb-bsd-sockets)
   (:export :arcmac
 	   :arccps
 	   :arcc

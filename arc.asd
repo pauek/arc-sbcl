@@ -14,7 +14,7 @@
    (:file "prim"))
   :serial t
 
-  :depends-on (:cl-fad :pk-walk :sb-bsd-sockets)
+  :depends-on (:cl-fad :sb-bsd-sockets)
 
   :perform
   (test-op :after (op c)

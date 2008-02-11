@@ -201,6 +201,10 @@
 (defun %csubs (cc new)
   (subst new *cursor* cc))
 
+(defun %maybe-do (e)
+  (if (and (consp e) (eq :do (car e)))
+      (cdr e)
+      (list e)))
 
 (def-arc-walker (%arccps cps-) cc)
 
@@ -211,18 +215,52 @@
   (declare (ignore cc))
   e)
 
-(defun cps-call (head rest cc)
-  (let ((pos (position-if-not #'atom rest)))
-    (cond (pos 
-	   (arccps (nth pos rest)
-		   (%csubs cc `(,head ,@(%cset pos rest)))))
-	  ((%prim? head) (%csubs cc `(,head ,@rest)))
-	  (t (let* ((k (gensym "K")))
-	       `(,head (fn (,k) 
-			 ,(arccps (%csubs cc k)))
-		       ,@rest))))))
+(defun cps-do (seq cc)
+  (flet ((_subslast (x) 
+	   (if (null x) 
+	       nil
+	       (let ((n (length x)))
+		 (append (subseq x 0 (1- n))
+			 (list (%csubs cc (car (last x)))))))))
+  (let ((pos (position-if-not #'atom seq)))
+    (cond (pos
+	   (let ((pre (subseq seq 0 pos))
+		 (post (subseq seq (1+ pos))))
+	     (if (null post)
+		 `(:do ,@pre ,(arccps (nth pos seq) cc))
+		 `(:do ,@pre
+		       ,@(%maybe-do
+			  (arccps (nth pos seq)
+				  `(:do ,@(_subslast post))))))))
+	  (t `(:do ,@(_subslast seq)))))))
 
-(defun cps-fn (e cc) (declare (ignore e cc)))
+(defun cps-call (head rest cc)
+  (flet ((_cont? (s) (null (symbol-package s))))
+    (let ((pos (position-if-not #'atom rest)))
+      (cond ((eq head :do) (cps-do rest cc))
+	    (pos 
+	     (arccps (nth pos rest)
+		     (%csubs cc `(,head ,@(%cset pos rest)))))
+	    ((or (%prim? head) (_cont? head))
+	     (%csubs cc `(,head ,@rest)))
+	    (t (let* ((k (gensym "K")))
+		 `(,head (fn (,k) 
+			     ,@(%maybe-do 
+				(arccps (%csubs cc k))))
+			 ,@rest)))))))
+
+(defun cps-fn (e cc)
+  (let ((arg-list (%parse-args (car e)))
+	(_body (cdr e)))
+    (labels ((_1arg (a)
+	       (if (and (eq :opt (car a)) (caddr a))
+		   (error "CPS is not implemented for parameters")
+		   a)))
+      (let ((k (gensym "K")))
+	(%csubs cc `(fn (,k ,@(%rebuild-args (mapcar #'_1arg arg-list)))
+			,@(%maybe-do (arccps `(:do ,@_body) 
+					     `(,k ,*cursor*)))))))))
+
 (defun cps-if (e cc) (declare (ignore e cc)))
 (defun cps-set (e cc) (declare (ignore e cc)))
 

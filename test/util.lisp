@@ -62,15 +62,15 @@
 			   (_eq/cps (cdr a) (cdr b)))))))
       (_eq/cps x y))))
 
-(macrolet ((_chk (name fn &optional (cmp '==))
+(macrolet ((_chk (name (fn &rest args) &optional (cmp '==))
 	     `(defun ,name (res str)
 		(let ((ret (ignore-errors
-			     (,fn (arc-read-form str)))))
+			     (,fn (arc-read-form str) ,@args))))
 		  (chk (,cmp res ret))))))
-  (_chk chkmac arcmac)
-  (_chk chkc   arcc)
-  (_chk chkcps arccps %equal/cps)
-  (_chk chkev  arcev))
+  (_chk chkmac (arcmac))
+  (_chk chkc   (arcc nil))
+  (_chk chkcps (arccps) %equal/cps)
+  (_chk chkev  (arcev)))
 
 (defun chkerr (str)
   (chk (handler-case (arcev (arc-read-form str))

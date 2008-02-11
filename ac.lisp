@@ -10,7 +10,7 @@
 
 ;;; Arc walker
 
-(defmacro arc-walker ((name prefix) &rest +args)
+(defmacro def-arc-walker ((name prefix) &rest +args)
   (flet ((_ (s) (intern (format nil "~a~a" prefix s))))
     `(defun ,name (e ,@+args)
        (cond ((atom e) (,(_ 'atom) e ,@+args))
@@ -150,7 +150,7 @@
 	  (car elts)
 	  (cons 'compose elts)))))
 
-(arc-walker (arcmac mac-))
+(def-arc-walker (arcmac mac-))
 
 (defun mac-atom (e)
   (if (%ssyntax? e)
@@ -212,7 +212,7 @@
   (subst new *cursor* *cc*))
 
 
-(arc-walker (arccps cps-))
+(def-arc-walker (arccps cps-))
 
 (defun cps-atom (e) e)
 
@@ -238,7 +238,7 @@
 (defmacro w/env+ (val &body body)
   `(let ((*env* (append ,val *env*))) ,@body))
 
-(arc-walker (arcc c-))
+(def-arc-walker (arcc c-))
 
 (defun c-atom (x)
   (flet ((_literal? (a)

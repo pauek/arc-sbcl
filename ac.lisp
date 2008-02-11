@@ -30,7 +30,7 @@
 
 ;;; Utilities
 
-(defun %set-pairs (rest)
+(defun %parse-pairs (rest)
   (labels ((_pairs (lst)
 	     (cond ((null lst) nil)
 		   ((consp (cdr lst))
@@ -167,7 +167,7 @@
   (labels ((_1pair (p)
 	     (destructuring-bind (place . val) p
 	       (list (arcmac place) (arcmac val)))))
-    `(set ,@(mapcan #'_1pair (%set-pairs e)))))
+    `(set ,@(mapcan #'_1pair (%parse-pairs e)))))
 
 (defun mac-fn (e)
   (let ((arg-list (%parse-args (car e)))
@@ -289,7 +289,7 @@
 		 ,(%arc-destructure wargs asym d+b))))))))
 
 (defun c-set (e env)
-  (let ((pairs (%set-pairs e)))
+  (let ((pairs (%parse-pairs e)))
     (labels ((_pair (p)
 	       (destructuring-bind (place . val) p
 		 (let ((v (arcc val env)))

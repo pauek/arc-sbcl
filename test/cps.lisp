@@ -27,6 +27,14 @@
   (chkcps "(+ '(1 2) '(3 4))"
 	  '(+ '(1 2) '(3 4))))
 
+(deftest c-backq
+  (chkcps "`(,a)"
+	  '`(,a))
+  (chkcps "(fn (a) `(,a))"
+	  '(fn (#:k a) (#:k `(,a))))
+  (chkcps "(fn (a b) `(1 ,a ,@b))"
+	  '(fn (#:k a b) (#:k `(1 ,a ,@b)))))
+
 (deftest c-block
   (chkcps "(fn () a)"     
 	  '(fn (#:k) (#:k a)))

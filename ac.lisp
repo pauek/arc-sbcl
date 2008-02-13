@@ -14,10 +14,7 @@
   (flet ((_ (s) (intern (format nil "~a~a" prefix s))))
     `(defun ,name (e ,@+args)
        (cond ((atom e) (,(_ 'atom) e ,@+args))
-	     ((backq? e) 
-	      (cons (car e) 
-		    (mapcar #'(lambda (e) (,name e ,@+args))
-			    (cdr e))))
+	     ((backq? e) (,(_ 'backq) e ,@+args))
 	     ((consp e)
 	      (case (car e)
 		(quote  (,(_ 'quote) (cdr e) ,@+args))
@@ -159,6 +156,9 @@
 (defun mac-quote (e)
   `(quote ,@e))
 
+(defun mac-backq (e)
+  (cons (car e) (mapcar #'arcmac (cdr e))))
+
 (defun mac-if (rest)
   `(if ,@(mapcar #'arcmac rest)))
 
@@ -207,6 +207,9 @@
 
 (defun cps-quote (e cc)
   (funcall cc `(quote ,@e)))
+
+(defun cps-backq (e cc)
+  (funcall cc e))
 
 (defun cps-call (head rest cc)
   (let ((curr 0))
@@ -305,6 +308,10 @@
 (defun c-quote (e env)
   (declare (ignore env))
   `(quote ,@e))
+
+(defun c-backq (e env)
+  (flet ((_arcc (x) (arcc x env)))
+    (cons (car e) (mapcar #'_arcc (cdr e)))))
 
 (defun c-if (e env)
   (labels ((_if (args)

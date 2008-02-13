@@ -17,10 +17,10 @@
 	 ,@(mapcar #'_off macs)))))
 
 (deftest m-simple
-  (with-mac ((do (&rest b) `(progn ,@b))
-	     (x  () 'y)
-	     (z  () 5)
-	     (o  (&rest r) `(oh! ,@r)))
+  (with-mac ((do (cc &rest b) (funcall cc `(progn ,@b)))
+	     (x  (cc) (funcall cc 'y))
+	     (z  (cc) (funcall cc 5))
+	     (o  (cc &rest r) (funcall cc `(oh! ,@r))))
     (chkmac "x" 
 	    'x)
     (chkmac "(fn (x) (+ x 1))" 
@@ -39,7 +39,7 @@
 	   5)))
 
 (deftest m-nested
-  (with-mac ((do (&rest b) `(progn ,@b)))
+  (with-mac ((do (cc &rest b) (funcall cc `(progn ,@b))))
     (chkmac "(do 1 (do 3 5))" 
 	    '(progn 1 (progn 3 5)))))
 
@@ -71,6 +71,7 @@
   (chkmac "a:~b:c" 
 	  '(compose a (complement b) c))
   ;; nested
-  (with-mac ((compose (&rest b) `(dummy ,@b)))
+  (with-mac ((compose (cc &rest b) 
+	       (funcall cc `(dummy ,@b))))
     (chkmac "a:b:c" 
 	    '(dummy a b c))))

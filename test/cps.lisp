@@ -157,3 +157,12 @@
 	  '(:do (set a 1) (c (fn (#:c) (set b #:c)) 2)))
   (chkcps "(+ 1 (set a 1 b (c 2)))"
 	  '(:do (set a 1) (c (fn (#:c) (+ 1 (set b #:c))) 2))))
+
+(deftest c-complex
+  (chkcps "(set a (if (b 1) 5 10))"
+	  '((fn (#:i) 
+	     (b (fn (#:b)
+		  (if #:b (#:i 5) (#:i 10)))
+	      1))
+	    (fn (#:r) (set a #:r)))))
+		    

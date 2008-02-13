@@ -103,12 +103,9 @@
 (defun backq? (e)
   (and (consp e)
        (member (car e)
-	       '(sb-impl::backq-list
-		 sb-impl::backq-list*
-		 sb-impl::backq-cons
-		 sb-impl::backq-comma
-		 sb-impl::backq-append
-		 sb-impl::backq-comma-at
+	       '(sb-impl::backq-list   sb-impl::backq-list*
+		 sb-impl::backq-cons   sb-impl::backq-comma
+		 sb-impl::backq-append sb-impl::backq-comma-at
 		 sb-impl::backq-comma-dot))))
 
 ;;; Macro expansion + special syntax

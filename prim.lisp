@@ -482,14 +482,19 @@
 
 (defun acompile (inname)
   (flet ((acompile1 (in out)
-	   (w/no-colon 
-	     (loop for x = (read in nil nil)
-		while x
-		do (let ((lisp (arcc x)))
-		     (format t "~s~%" lisp)
-		     (%arcev lisp)
-		     (format t "~%")
-		     (finish-output out))))))
+	   (loop for x = (w/no-colon (read in nil nil))
+	      while x
+	      do (let* ((mac  (arcmac x))
+			(cps  (arccps mac))
+			(lisp (arcc cps nil)))
+		   (format out "~a~%" 
+			   (make-string 70 :initial-element #\*))
+		   (format out "~s~%~%" x)
+		   (format out "~s~%~%" mac)
+		   (format out "~s~%~%" cps)
+		   (format out "~s~%~%" lisp)
+		   (%arcev lisp)
+		   (finish-output out)))))
     (let ((outname (format nil "~a.lisp" inname)))
       (with-open-file (in inname)
 	(with-open-file (out outname 

@@ -178,3 +178,16 @@
              (sref x \"ho\" \"hi\")
              (x \"hi\")))" 
 	 "ho"))
+
+(deftest t-apply 
+  (chkev "(apply + '(1 2 3))" 6)
+  (chkev "(apply + 1 '(2 3))" 6)
+  (chkev "(apply + 1 2 3 nil)" 6)
+  (chkev "(apply * '(2 2 2))" 8)
+  (chkev "(apply car '((1 . 2)))" 1)
+  (chkev "(apply cdr '((1 . 2)))" 2)
+  (chkev "(apply rep '(5))" 5)
+  (chkev "(apply [* _ 2] '(7))" 14)
+  (chkev "(apply (fn (x) (+ x \" \")) '(\"hola\"))" "hola "))
+
+  

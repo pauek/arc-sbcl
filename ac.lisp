@@ -20,7 +20,7 @@
 			    (cdr e))))
 	     ((consp e)
 	      (case (car e)
-		(quote `(quote ,@(cdr e)))
+		(quote  (,(_ 'quote) (cdr e) ,@+args))
 		(if     (,(_ 'if) (cdr e) ,@+args))
 		(fn     (,(_ 'fn) (cdr e) ,@+args))
 		(set    (,(_ 'set) (cdr e) ,@+args))
@@ -156,6 +156,9 @@
       (arcmac (%expand-syntax e))
       e))
 
+(defun mac-quote (e)
+  `(quote ,@e))
+
 (defun mac-if (rest)
   `(if ,@(mapcar #'arcmac rest)))
 
@@ -202,25 +205,30 @@
 (defun cps-atom (e cc) 
   (funcall cc e))
 
+(defun cps-quote (e cc)
+  (funcall cc `(quote ,@e)))
+
 (defun cps-call (head rest cc)
   (let ((curr 0))
     (labels ((_w/cc? (e)
-	       (and (not (%prim? e))
-		    (not (null (symbol-package e)))))
+	       (or (and (consp e) (eq (car e) 'fn))
+		   (and (not (%prim? e))
+			(not (null (symbol-package e))))))
 	     (_next (e)
 	       (setf (nth curr rest) e)
 	       (if (< (incf curr) (length rest))
 		   (arccps (nth curr rest) #'_next)
 		   (cond ((_w/cc? head)
 			  (let ((k (gensym "K")))
-			    `(,head (fn (,k) ,@(%rm-do? (funcall cc k))) 
-				    ,@rest)))
-			 (t (funcall cc `(,head ,@rest)))))))
+			    `(,(arccps head) 
+			       (fn (,k) ,@(%rm-do? (funcall cc k))) 
+			       ,@rest)))
+			 (t (funcall cc `(,(arccps head) ,@rest)))))))
       (cond ((eq head :do) (cps-do rest cc))
 	    ((null rest)
 	     (if (_w/cc? head)
 		 (let ((k (gensym "K")))
-		   `(,head (fn (,k) ,(funcall cc k))))
+		   `(,(arccps head) (fn (,k) ,(funcall cc k))))
 		 (funcall cc `(,head))))
 	    (t (arccps (car rest) #'_next))))))
 
@@ -290,6 +298,9 @@
     (cond ((_literal? x) x)
 	  ((member x env) x)
 	  (t (%sym x)))))
+
+(defun c-quote (e env)
+  `(quote ,@e))
 
 (defun c-if (e env)
   (labels ((_if (args)
@@ -366,4 +377,4 @@
       (eval form))))
 
 (defun arcev (form)
-  (%arcev (arcc (arcmac form) nil)))
+  (%arcev (arcc (arccps (arcmac form)) nil)))

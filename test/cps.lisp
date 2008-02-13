@@ -23,7 +23,9 @@
   (chkcps "(+ 1 x)" 
 	  '(+ 1 x))
   (chkcps "(sqrt (+ 1 x))" 
-	  '(sqrt (+ 1 x))))
+	  '(sqrt (+ 1 x)))
+  (chkcps "(+ '(1 2) '(3 4))"
+	  '(+ '(1 2) '(3 4))))
 
 (deftest c-block
   (chkcps "(fn () a)"     

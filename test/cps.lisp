@@ -178,8 +178,9 @@
   (chkcps "((fn ()
              (if a b c)
              (set x 10)))"
-	  '((fn ()
-	     ((fn (#:i) (if a b c))
-	      (fn (#:r) (set x 10)))))))
+	  '((fn (#:k)
+	     ((fn (#:i) (if a (#:i b) (#:i c)))
+	      (fn (#:n) (#:k (set x 10)))))
+	    (fn (#:r) #:r))))
 	     
 		    

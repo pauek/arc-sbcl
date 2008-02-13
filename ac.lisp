@@ -278,7 +278,7 @@
 		   (arccps expr #'_then)))))
       (let ((k2 (gensym "K")))
 	`((fn (,k1) ,(_if e))
-	  (fn (,k2) ,(funcall cc k2)))))))
+	  (fn (,k2) ,@(%rm-do? (funcall cc k2))))))))
 
 (defun cps-set (e cc)
   (let ((pairs (%parse-pairs e)))

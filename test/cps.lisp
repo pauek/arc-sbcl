@@ -174,5 +174,12 @@
 	     (b (fn (#:b)
 		  (if #:b (#:i 5) (#:i 10)))
 	      1))
-	    (fn (#:r) (set a #:r)))))
+	    (fn (#:r) (set a #:r))))
+  (chkcps "((fn ()
+             (if a b c)
+             (set x 10)))"
+	  '((fn ()
+	     ((fn (#:i) (if a b c))
+	      (fn (#:r) (set x 10)))))))
+	     
 		    

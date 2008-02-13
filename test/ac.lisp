@@ -2,52 +2,91 @@
 (in-package :arc/test)
 
 (deftest t-literals
-  (chkev 1          "1")
-  (chkev #\a        "#\\a")
-  (chkev "a"        "\"a\"")
-  (chkev 1.45       "1.45")
-  (chkev nil        "nil")
-  (chkev t          "t")
-  (chkev 'a         "(quote a)")
-  (chkev '(1 2 3)   "(quote (1 2 3))"))
+  (chkev "1"     
+	 1)
+  (chkev "#\\a"  
+	 #\a)
+  (chkev "\"a\"" 
+	 "a")
+  (chkev "1.45"  
+	 1.45)
+  (chkev "nil"   
+	 nil)
+  (chkev "t"     
+	 t)
+  (chkev "(quote a)"       
+	 'a)
+  (chkev "(quote (1 2 3))" 
+	 '(1 2 3)))
 
 (deftest t-funcalls
-  (chkev -1           "((fn () -1))")
-  (chkev 3            "((fn (x) (+ 1 x)) 2)")
-  (chkev 5            "((fn (a b) (+ a b)) 2 3)")
-  (chkev '((2 3) . 1) "((fn (x . y) (cons y x)) 1 2 3)")
-  (chkev '((1 2))     "((fn x x) '(1 2))")
-  (chkev 11           "((fn (x (o y 6)) (+ x y)) 5 6)")
-  (chkev 11           "((fn (x (o y 6)) (+ x y)) 5)")
-  (chkev #\b          "((fn ((o a #\\a)) a) #\\b)")
-  (chkev nil          "((fn ((o a)) a))")
-  (chkev "zz"         "((fn ((o a)) \"zz\"))")
-  (chkev 10           "((fn (x y (o z 1)) (* z (+ x y))) 5 5)")
-  (chkev 20           "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)"))
+  (chkev "((fn () -1))" 
+	 -1)
+  (chkev "((fn (x) (+ 1 x)) 2)" 
+	 3)
+  (chkev "((fn (a b) (+ a b)) 2 3)" 
+	 5)
+  (chkev "((fn (x . y) (cons y x)) 1 2 3)" 
+	 '((2 3) . 1))
+  (chkev "((fn x x) '(1 2))" 
+	 '((1 2)))
+  (chkev "((fn (x (o y 6)) (+ x y)) 5 6)" 
+	 11)
+  (chkev "((fn (x (o y 6)) (+ x y)) 5)" 
+	 11)
+  (chkev "((fn ((o a #\\a)) a) #\\b)" 
+	 #\b)
+  (chkev "((fn ((o a)) a))" 
+	 nil)
+  (chkev "((fn ((o a)) \"zz\"))" 
+	 "zz")
+  (chkev "((fn (x y (o z 1)) (* z (+ x y))) 5 5)" 
+	 10)
+  (chkev "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)" 
+	 20))
 
 (deftest t-cmplx-arg
-  (chkev 1    "((fn ((a b)) (- a b)) '(2 1))")
-  (chkev "xx" "((fn (a (o b a)) (+ b a)) \"x\")")
-  (chkev 6    "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 1)")
-  (chkev 30   "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 2 3)")
-  (chkev 8    "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 2 2 2)")
-  (chkev '((a b) c) "((fn ((x (y z))) `((,x ,y) ,z)) '(a (b c)))")
-  (chkev '((nil nil) nil) "((fn ((x (y z))) `((,x ,y) ,z)) nil)")
-  (chkev '(j k l m) "((fn (x (y z) w) `(,x ,y ,z ,w)) 'j '(k l) 'm)")
-  (chkev '((j k) l (m n o)) "((fn (x (y z) . w) `((,x ,y) ,z ,w)) 'j '(k l) 'm 'n 'o)")
-  (chkev '(a nil) "((fn ((x y)) `(,x ,y)) '(a))")
-  (chkev '(a b nil) "((fn ((x y z)) `(,x ,y ,z)) '(a b))")
-  (chkev '(nil nil nil) "((fn ((x y z)) `(,x ,y ,z)) nil)"))
+  (chkev "((fn ((a b)) (- a b)) '(2 1))" 
+	 1)
+  (chkev "((fn (a (o b a)) (+ b a)) \"x\")" 
+	 "xx")
+  (chkev "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 1)" 
+	 6)
+  (chkev "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 2 3)" 
+	 30)
+  (chkev "((fn (a (o b 2) (o c (+ a b))) (* a b c)) 2 2 2)" 
+	 8)
+  (chkev "((fn ((x (y z))) `((,x ,y) ,z)) '(a (b c)))" 
+	 '((a b) c))
+  (chkev "((fn ((x (y z))) `((,x ,y) ,z)) nil)" 
+	 '((nil nil) nil))
+  (chkev "((fn (x (y z) w) `(,x ,y ,z ,w)) 'j '(k l) 'm)" 
+	 '(j k l m))
+  (chkev "((fn (x (y z) . w) `((,x ,y) ,z ,w)) 'j '(k l) 'm 'n 'o)" 
+	 '((j k) l (m n o)))
+  (chkev "((fn ((x y)) `(,x ,y)) '(a))"
+	 '(a nil))
+  (chkev "((fn ((x y z)) `(,x ,y ,z)) '(a b))" 
+	 '(a b nil))
+  (chkev "((fn ((x y z)) `(,x ,y ,z)) nil)" 
+	 '(nil nil nil)))
 
 (deftest t-index 
-  (chkev #\h  "(\"hiho\" 0)")
-  (chkev #\i  "(\"hiho\" 1)")
-  (chkev #\h  "(\"hiho\" 2)")
-  (chkev #\o  "(\"hiho\" 3)")
+  (chkev "(\"hiho\" 0)"  
+	 #\h)
+  (chkev "(\"hiho\" 1)"
+	 #\i)
+  (chkev "(\"hiho\" 2)"  
+	 #\h)
+  (chkev "(\"hiho\" 3)"  
+	 #\o)
   (chkerr "(\"hiho\" 4)")
-  (chkev 1 "('(1 2 3) 0)")
-  (chkev 2 "('(1 2 3) 1)")
-  (chkev 3 "('(1 2 3) 2)"))
+  (chkev "('(1 2 3) 0)" 
+	 1)
+  (chkev "('(1 2 3) 1)" 
+	 2)
+  (chkev "('(1 2 3) 2)" 
+	 3))
 
 (defparameter arc::$x nil) ; Avoid SBCL warning
 
@@ -57,38 +96,62 @@
   (chkerr "(set x 1 y 2 z)")
   (chkerr "(set #\a 1)")
   (chkerr "(set \"h\" 'a)")
-  (chkev 5 "((fn () (set x 5) x))")
-  (chkev '(-3 . -3) "((fn ((o a) (o b)) (set a -3 b a) (cons a b)))")
-  (chkev #\a "((fn (x) (set x #\\a) x) #\\z)")
-  (chkev 1   "((fn ((o x)) (set x 1) x))")
-  (chkev 2   "((fn ((o x 5)) ((fn ((o x 2)) x))))")
-  (chkev 3   "((fn ((o x)) ((fn (y) (set x y)) 3) x))")
+  (chkev "((fn () (set x 5) x))" 
+	 5)
+  (chkev "((fn ((o a) (o b)) (set a -3 b a) (cons a b)))" 
+	 '(-3 . -3))
+  (chkev "((fn (x) (set x #\\a) x) #\\z)" 
+	 #\a)
+  (chkev "((fn ((o x)) (set x 1) x))"   
+	 1)
+  (chkev "((fn ((o x 5)) ((fn ((o x 2)) x))))"   
+	 2)
+  (chkev "((fn ((o x)) ((fn (y) (set x y)) 3) x))"   
+	 3)
   (chkerr "((fn (x y) nil))")
   (chkerr "((fn ((o x) y) x))"))
 
 (deftest t-if 
-  (chkev 0 "(if t   0 1)")
-  (chkev 1 "(if nil 0 1)")
-  (chkev 0 "(if t   0 nil 1 2)")
-  (chkev 0 "(if t   0 t   1 2)")
-  (chkev 1 "(if nil 0 t   1 2)")
-  (chkev 2 "(if nil 0 nil 1 2)")
-  (chkev 3 "(if nil 0 nil 1 nil 2 t   3 nil 4)")
-  (chkev 4 "(if nil 0 nil 1 nil 2 nil 3 t   4)"))
+  (chkev "(if t   0 1)" 
+	 0)
+  (chkev "(if nil 0 1)" 
+	 1)
+  (chkev "(if t   0 nil 1 2)" 
+	 0)
+  (chkev "(if t   0 t   1 2)" 
+	 0)
+  (chkev "(if nil 0 t   1 2)" 
+	 1)
+  (chkev "(if nil 0 nil 1 2)" 
+	 2)
+  (chkev "(if nil 0 nil 1 nil 2 t   3 nil 4)" 
+	 3)
+  (chkev "(if nil 0 nil 1 nil 2 nil 3 t   4)" 
+	 4))
 
 (deftest t-backq
-  (chkev '(1 2)         "((fn (x) `(1 ,x)) 2)")
-  (chkev '(1 2 3)       "((fn (x y) `(,x 2 ,y)) 1 3)")
-  (chkev '(1 2 3)       "((fn (x) `(1 ,@x)) '(2 3))")
-  (chkev '(1 2 3 4)     "((fn (x y) `(1 ,@x ,y)) '(2 3) 4)")
-  (chkev '(1 (2 3))     "((fn (x) `(1 (2 ,x))) 3)")
-  (chkev '(1 (2 (3 4))) "((fn (x) `(1 (2 ,x))) '(3 4))")
-  (chkev '((1 () 2 3))  "((fn x `((1 () ,@x))) 2 3)"))
+  (chkev "((fn (x) `(1 ,x)) 2)"         
+	 '(1 2))
+  (chkev "((fn (x y) `(,x 2 ,y)) 1 3)"       
+	 '(1 2 3))
+  (chkev "((fn (x) `(1 ,@x)) '(2 3))"       
+	 '(1 2 3))
+  (chkev "((fn (x y) `(1 ,@x ,y)) '(2 3) 4)"     
+	 '(1 2 3 4))
+  (chkev "((fn (x) `(1 (2 ,x))) 3)"     
+	 '(1 (2 3)))
+  (chkev "((fn (x) `(1 (2 ,x))) '(3 4))" 
+	 '(1 (2 (3 4))))
+  (chkev "((fn x `((1 () ,@x))) 2 3)"  
+	 '((1 () 2 3))))
 
 (deftest t-brackets
-  (chkev 2        "([+ _ 1] 1)")
-  (chkev '(1 . 2) "([cons _ 2] 1)")
-  (chkev "hi, ho" "([+ _ \", ho\"] \"hi\")"))
+  (chkev "([+ _ 1] 1)"        
+	 2)
+  (chkev "([cons _ 2] 1)" 
+	 '(1 . 2))
+  (chkev "([+ _ \", ho\"] \"hi\")" 
+	 "hi, ho"))
 
 (deftest t-error
   (chkerr "(err \"This is an error\")"))

@@ -63,7 +63,7 @@
       (_eq/cps x y))))
 
 (macrolet ((_chk (name (fn &rest args) &optional (cmp '==))
-	     `(defun ,name (res str)
+	     `(defun ,name (str res)
 		(let ((ret (ignore-errors
 			     (,fn (arc-read-form str) ,@args))))
 		  (chk (,cmp res ret))))))

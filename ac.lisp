@@ -193,25 +193,12 @@
 
 ;;; Continuation passing style
 
-(defparameter *cursor* (gensym "CUR"))
-
-(defun %cset (n f)
-  (append (subseq f 0 n) `(,*cursor*) (subseq f (1+ n))))
-
-(defun %csubs (cc new)
-  (subst new *cursor* cc))
-
-(defun %maybe-do (e)
-  (if (and (consp e) (eq :do (car e)))
-      (cdr e)
-      (list e)))
-
 (def-arc-walker (%arccps cps-) cc)
 
 (defun arccps (e &optional (cc #'identity))
   (%arccps e cc))
 
-(defun %do? (e)
+(defun %rm-do? (e)
   (if (and (consp e) (eq (car e) :do))
       (cdr e)
       (list e)))
@@ -230,7 +217,7 @@
 		   (arccps (nth curr rest) #'_next)
 		   (cond ((_w/cc? head)
 			  (let ((k (gensym "K")))
-			    `(,head (fn (,k) ,@(%do? (funcall cc k))) 
+			    `(,head (fn (,k) ,@(%rm-do? (funcall cc k))) 
 				    ,@rest)))
 			 (t (funcall cc `(,head ,@rest)))))))
       (cond ((eq head :do) (cps-do rest cc))
@@ -244,7 +231,7 @@
 (defun cps-do (body cc)
   (flet ((_next (e)
 	   `(:do ,@(when (not (symbolp e)) (list e))
-		 ,@(%do? (arccps `(:do ,@(cdr body)) cc)))))
+		 ,@(%rm-do? (arccps `(:do ,@(cdr body)) cc)))))
     (if (> (length body) 1)
 	(arccps (car body) #'_next)
 	(arccps (car body) cc))))
@@ -254,7 +241,7 @@
 	(body (cdr e))
 	(k (gensym "K")))
     (funcall cc `(fn (,k ,@(%rebuild-args args))
-		   ,@(%do? (arccps `(:do ,@body) 
+		   ,@(%rm-do? (arccps `(:do ,@body) 
 				   (lambda (_) `(,k ,_))))))))
 
 (defun cps-if (e cc)
@@ -280,8 +267,18 @@
 	`((fn (,k1) ,(_if e))
 	  (fn (,k2) ,(funcall cc k2)))))))
 
-(defun cps-set (e cc) 
-  (declare (ignore e cc)))
+(defun cps-set (e cc)
+  (let ((pairs (%parse-pairs e)))
+    (labels ((_next (e)
+	       (let ((place (caar pairs)))
+		 (cond ((null (cdr pairs)) 
+			(funcall cc `(set ,place ,e)))
+		       (t (setf pairs (cdr pairs))
+			  `(:do (set ,place ,e)
+				,@(%rm-do? (_set)))))))
+	     (_set ()
+	       (arccps (cdar pairs) #'_next)))
+      (_set))))
 
 ;;; Compilation
 

@@ -137,3 +137,14 @@
 	        1))
 	    (fn (#:r) #:r))
 	  "(if (a 1) x (b 2) y z)"))
+
+(deftest c-set 
+  (chkcps '(set a 1) "(set a 1)")
+  (chkcps '(:do (set a 1) (set b 2)) 
+	  "(set a 1 b 2)")
+  (chkcps '(b (fn (#:b) (+ 1 (set a #:b))) 2)
+	  "(+ 1 (set a (b 2)))")
+  (chkcps '(:do (set a 1) (c (fn (#:c) (set b #:c)) 2))
+	  "(set a 1 b (c 2))")
+  (chkcps '(:do (set a 1) (c (fn (#:c) (+ 1 (set b #:c))) 2))
+	  "(+ 1 (set a 1 b (c 2)))"))

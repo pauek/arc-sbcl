@@ -8,7 +8,7 @@
 
 (in-package :arc)
 
-;;; Arc walker
+;;; Walker core
 
 (defmacro def-arc-walker ((name prefix) &rest +args)
   (flet ((_ (s) (intern (format nil "~a~a" prefix s))))
@@ -16,8 +16,7 @@
        (cond ((atom e) (,(_ 'atom) e ,@+args))
 	     ((backq? e) 
 	      (cons (car e) 
-		    (mapcar #'(lambda (e) 
-				(,name e ,@+args))
+		    (mapcar #'(lambda (e) (,name e ,@+args))
 			    (cdr e))))
 	     ((consp e)
 	      (case (car e)
@@ -225,13 +224,14 @@
 		 (funcall cc `(,head))))
 	    (t (arccps (car rest) #'_next))))))
 
-(defun cps-do (body cc)
-  (flet ((_next (e)
-	   `(:do ,@(when (not (symbolp e)) (list e))
-		 ,@(%rm-do? (arccps `(:do ,@(cdr body)) cc)))))
-    (if (> (length body) 1)
-	(arccps (car body) #'_next)
-	(arccps (car body) cc))))
+(defun cps-do (e cc)
+  (let ((body e))
+    (flet ((_next (e)
+	     `(:do ,@(when (not (symbolp e)) (list e))
+		   ,@(%rm-do? (arccps `(:do ,@(cdr body)) cc)))))
+      (if (> (length body) 1)
+	  (arccps (car body) #'_next)
+	  (arccps (car body) cc)))))
 
 (defun cps-fn (e cc)
   (let ((args (%parse-args (car e)))
@@ -355,7 +355,7 @@
 	    (t 
 	     `($apply ,_head (list ,@_rest)))))))
 
-;;; arcme & arcc & arcev
+;;; arcev
 
 (defun %arcev (form)
   (flet ((_ign-warn (condition)

@@ -17,37 +17,46 @@
 (defun %prim? (x)
   (gethash (%sym x) *primitives*))
 
+(defstruct prim fn)
+
 (defmacro defprim (name args &body body)
   (let ((_name (%sym name)))
     `(progn
        (%add-prim ',name)
        (defun ,_name ,args ,@body)
-       (defparameter ,_name #',_name))))
+       (defparameter ,_name (make-prim :fn #',_name)))))
 
 
-(macrolet ((_ (name &rest args)
-	     `(defprim ,name (fn ,@args)
-		(if (functionp fn)
-		    (funcall fn ,@args)
-		    ($apply fn (list ,@args))))))
+(macrolet 
+    ((_ (name &rest args)
+       `(defprim ,name (fn cont ,@args)
+	  (cond ((prim-p fn) 
+		 (error "A primitive at funcall!"))
+		((functionp fn) (funcall fn cont ,@args))
+		(t ($apply cont fn (list ,@args)))))))
   (_ funcall0)
   (_ funcall1 a1)
   (_ funcall2 a1 a2)
   (_ funcall3 a1 a2 a3)
   (_ funcall4 a1 a2 a3 a4))
 
-(defprim apply (fn &rest _args)
+;; Apply is _not_ a primitive
+(defun $apply (cont fn &rest _args)
   (labels ((_app-args (args)
 	     (cond ((null args) nil)
 		   ((null (cdr args)) (car args))
 		   (t (cons (car args) 
 			    (_app-args (cdr args)))))))
     (let ((args (_app-args _args)))
-      (cond ((functionp fn) (apply fn args))
-	    ((consp fn) (nth (car args) fn))
-	    ((stringp fn) (char fn (car args)))
-	    ((hash-table-p fn) (gethash (car args) fn))
+      (cond ((prim-p fn)       (funcall cont (apply (prim-fn fn) args)))
+	    ((functionp fn)    (apply fn cont args))
+	    ((consp fn)        (funcall cont (nth (car args) fn)))
+	    ((stringp fn)      (funcall cont (char fn (car args))))
+	    ((hash-table-p fn) (funcall cont (gethash (car args) fn)))
 	    (t (error "Call to inappropriate object [~a]" fn))))))
+
+(defparameter $apply #'$apply)
+
 
 (defprim bound (x)
   (%boundp x))
@@ -152,6 +161,7 @@
   (cond ((%tagged? x)        (%type x))
 	((consp x)           'cons)
 	((symbolp x)         'sym) ; + null
+	((prim-p x)          'fn)
 	((functionp x)       'fn)
 	((characterp x)      'char)
 	((stringp x)         'string)

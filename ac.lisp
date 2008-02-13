@@ -211,8 +211,11 @@
 (defun cps-call (head rest cc)
   (let ((curr 0))
     (labels ((_w/cc? (e)
-	       (or (and (consp e) (eq (car e) 'fn))
-		   (and (not (%prim? e))
+	       (or (stringp e)
+		   (and (consp e) (eq (car e) 'fn))
+		   (and (consp e) (eq (car e) 'quote))
+		   (and (symbolp e)
+			(not (%prim? e))
 			(not (null (symbol-package e))))))
 	     (_next (e)
 	       (setf (nth curr rest) e)
@@ -300,6 +303,7 @@
 	  (t (%sym x)))))
 
 (defun c-quote (e env)
+  (declare (ignore env))
   `(quote ,@e))
 
 (defun c-if (e env)
@@ -361,10 +365,10 @@
     (let ((len (length _rest)))
       (cond ((%prim? head)
 	     `(,(%sym head) ,@_rest))
-	    ((<= 0 len 4) 
-	     `(,(%sym (format nil "FUNCALL~a" len)) ,_head ,@_rest))
+	    ((<= 0 len 5) 
+	     `(,(%sym (format nil "FUNCALL~a" (1- len))) ,_head ,@_rest))
 	    (t 
-	     `($apply ,_head (list ,@_rest)))))))
+	     `($apply ,(car _rest) ,_head (list ,@(cdr _rest))))))))
 
 ;;; arcev
 

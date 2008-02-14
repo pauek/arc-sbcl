@@ -182,5 +182,12 @@
 	     ((fn (#:i) (if a (#:i b) (#:i c)))
 	      (fn (#:n) (#:k (set x 10)))))
 	    (fn (#:r) #:r))))
+
+#|
+  (chkcps "(fn () (if a b) d)"
+	  '(fn (#:k)
+	    ((fn (#:i) 
+	      (if a (#:i b)
+|#
 	     
 		    

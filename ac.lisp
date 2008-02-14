@@ -269,7 +269,7 @@
 				   (cdr e))
 				  (t (list e))))
 			  (_else ()
-			    (cond ((null else) nil)
+			    (cond ((null else) (funcall ifcc nil))
 				  ((null (cdr else))
 				   (arccps (car else) ifcc))
 				  (t (_if else))))

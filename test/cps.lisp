@@ -100,7 +100,7 @@
 
 (deftest c-if
   (chkcps "(if a b)"
-	  '((fn (#:k) (if a (#:k b)))
+	  '((fn (#:k) (if a (#:k b) (#:k nil)))
 	    (fn (#:r) #:r)))
   (chkcps "(if a b c)"
 	  '((fn (#:k) (if a (#:k b) (#:k c))) 

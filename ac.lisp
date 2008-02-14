@@ -213,8 +213,9 @@
 (defun cps-backq (e cc)
   (funcall cc e))
 
-(defun cps-call (head rest cc)
-  (let ((curr 0))
+(defun cps-call (head _rest cc)
+  (let ((rest (copy-list _rest))
+	(curr 0))
     (labels ((_w/cc? (e)
 	       (or (stringp e)
 		   (and (consp e) (eq (car e) 'fn))

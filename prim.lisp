@@ -493,8 +493,8 @@
 		   (format out "~s~%~%" mac)
 		   (format out "~s~%~%" cps)
 		   (format out "~s~%~%" lisp)
-		   (%arcev lisp)
-		   (finish-output out)))))
+		   (finish-output out)
+		   (%arcev lisp)))))
     (let ((outname (format nil "~a.lisp" inname)))
       (with-open-file (in inname)
 	(with-open-file (out outname 

@@ -33,7 +33,12 @@
   (chkcps "(fn (a) `(,a))"
 	  '(fn (#:k a) (#:k `(,a))))
   (chkcps "(fn (a b) `(1 ,a ,@b))"
-	  '(fn (#:k a b) (#:k `(1 ,a ,@b)))))
+	  '(fn (#:k a b) (#:k `(1 ,a ,@b))))
+  (chkcps "(fn (x) `(a ,(b x)))"
+	  '(fn (#:k x) 
+	     (b (fn (#:b)
+		  (#:k `(a ,#:b)))
+	      x))))
 
 (deftest c-block
   (chkcps "(fn () a)"     

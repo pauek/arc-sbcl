@@ -96,13 +96,16 @@
 	 ,@body))))
 
 ;;; SBCL specific
+(defun backq-fn? (sym)
+  (member sym
+	  '(sb-impl::backq-list   sb-impl::backq-list*
+	    sb-impl::backq-cons   sb-impl::backq-comma
+	    sb-impl::backq-append sb-impl::backq-comma-at
+	    sb-impl::backq-comma-dot)))
+
 (defun backq? (e)
   (and (consp e)
-       (member (car e)
-	       '(sb-impl::backq-list   sb-impl::backq-list*
-		 sb-impl::backq-cons   sb-impl::backq-comma
-		 sb-impl::backq-append sb-impl::backq-comma-at
-		 sb-impl::backq-comma-dot))))
+       (backq-fn? (car e))))
 
 ;;; Macro expansion + special syntax
 
@@ -211,7 +214,7 @@
   (funcall cc `(quote ,@e)))
 
 (defun cps-backq (e cc)
-  (funcall cc e))
+  (cps-call (car e) (cdr e) cc))
 
 (defun cps-call (head _rest cc)
   (let ((rest (copy-list _rest))
@@ -221,6 +224,7 @@
 		   (and (consp e) (eq (car e) 'fn))
 		   (and (consp e) (eq (car e) 'quote))
 		   (and (symbolp e)
+			(not (backq-fn? e))
 			(not (%prim? e))
 			(not (null (symbol-package e))))))
 	     (_next (e)

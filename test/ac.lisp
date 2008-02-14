@@ -43,7 +43,9 @@
   (chkev "((fn (x y (o z 1)) (* z (+ x y))) 5 5)" 
 	 10)
   (chkev "((fn (x y (o z 1)) (* z (+ x y))) 5 5 2)" 
-	 20))
+	 20)
+  (chkev "((fn (x) (if (< x 0) 1) 5) 1)"
+	 5))
 
 (deftest t-cmplx-arg
   (chkev "((fn ((a b)) (- a b)) '(2 1))" 

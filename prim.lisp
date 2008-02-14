@@ -30,8 +30,7 @@
 (macrolet 
     ((_ (name &rest args)
        `(defprim ,name (fn cont ,@args)
-	  (cond ((prim-p fn) 
-		 (error "A primitive at funcall!"))
+	  (cond ((prim-p fn) (funcall cont (funcall (prim-fn fn) ,@args)))
 		((functionp fn) (funcall fn cont ,@args))
 		(t ($apply cont fn (list ,@args)))))))
   (_ funcall0)

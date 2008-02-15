@@ -48,30 +48,18 @@
 (deftest m-syntax
   (chkmac "(#\\: #\\;)" 
 	  '(#\: #\;)) ;; chk. w/no-colon
-  (chkev "(ssyntax 'a:b)" 
-	 t)
-  (chkev "(ssyntax '~a)" 
-	 t)
-  (chkev "(ssyntax 'z:y:~a)" 
-	 t)
-  (chkev "(ssyntax 'a)" 
-	 nil)
-  (chkev "(ssyntax 1)" 
-	 nil)
-  (chkev "(ssyntax \"hi!\")" 
-	 nil)
-  (chkev "(ssexpand 'a:b:c)" 
-	 '(compose a b c))
-  (chkev "(ssexpand '~x)" 
-	 '(complement x))
-  (chkev "(ssexpand 'a:~q:s)"
-	 '(compose a (complement q) s))
-  (chkmac "a:b:c" 
-	  '(compose a b c))
-  (chkmac "~a"  
-	  '(complement a))
-  (chkmac "a:~b:c" 
-	  '(compose a (complement b) c))
+  (chkev "(ssyntax 'a:b)"      t)
+  (chkev "(ssyntax '~a)"       t)
+  (chkev "(ssyntax 'z:y:~a)"   t)
+  (chkev "(ssyntax 'a)"        nil)
+  (chkev "(ssyntax 1)"         nil)
+  (chkev "(ssyntax \"hi!\")"   nil)
+  (chkev "(ssexpand 'a:b:c)"   '(compose a b c))
+  (chkev "(ssexpand '~x)"      '(complement x))
+  (chkev "(ssexpand 'a:~q:s)"  '(compose a (complement q) s))
+  (chkmac "a:b:c"              '(compose a b c))
+  (chkmac "~a"                 '(complement a))
+  (chkmac "a:~b:c"             '(compose a (complement b) c))
   ;; nested
   (with-mac ((compose (cc &rest b) 
 	       (funcall cc `(dummy ,@b))))

@@ -12,68 +12,45 @@
   (chk (not (%equal/cps '(#:k2 #:k3 1 #\a "b") '(#:a3 #:a3 1 #\a "b")))))
 
 (deftest c-simple
-  (chkcps "a" 
-	  'a)
-  (chkcps "#\\a" 
-	  #\a)
-  (chkcps "\"hi\"" 
-	  "hi")
-  (chkcps "(+ 1 x)" 
-	  '(+ 1 x))
-  (chkcps "(sqrt (+ 1 x))" 
-	  '(sqrt (+ 1 x)))
-  (chkcps "(+ '(1 2) '(3 4))"
-	  '(+ '(1 2) '(3 4))))
+  (chkcps "a"                 'a)
+  (chkcps "#\\a"              #\a)
+  (chkcps "\"hi\""            "hi")
+  (chkcps "(+ 1 x)"           '(+ 1 x))
+  (chkcps "(sqrt (+ 1 x))"    '(sqrt (+ 1 x)))
+  (chkcps "(+ '(1 2) '(3 4))" '(+ '(1 2) '(3 4))))
 
 (deftest c-backq
-  (chkcps "`(,a)"
-	  '`(,a))
-  (chkcps "(fn (a) `(,a))"
-	  '(fn (#:k a) (#:k `(,a))))
-  (chkcps "(fn (a b) `(1 ,a ,@b))"
-	  '(fn (#:k a b) (#:k `(1 ,a ,@b))))
-  (chkcps "(fn (x) `(a ,(b x)))"
-	  '(fn (#:k x) 
-	     (b (fn (#:b)
-		  (#:k `(a ,#:b)))
-	      x))))
+  (chkcps "`(,a)"                  '`(,a))
+  (chkcps "(fn (a) `(,a))"         '(fn (#:k a) (#:k `(,a))))
+  (chkcps "(fn (a b) `(1 ,a ,@b))" '(fn (#:k a b) (#:k `(1 ,a ,@b))))
+  (chkcps "(fn (x) `(a ,(b x)))"   '(fn (#:k x) 
+				     (b (fn (#:b)
+					 (#:k `(a ,#:b)))
+				      x))))
 
 (deftest c-block
-  (chkcps "(fn () a)"     
-	  '(fn (#:k) (#:k a)))
-  (chkcps "(fn () a b)"   
-	  '(fn (#:k) (#:k b)))
-  (chkcps "(fn () a b c)" 
-	  '(fn (#:k) (#:k c)))
-  (chkcps "(fn (x) (+ 1 (sqrt x)))"
-	  '(fn (#:k x) (#:k (+ 1 (sqrt x)))))
-  (chkcps "(fn () (a 1) b)"
-	  '(fn (#:k) (a (fn (#:r) (#:k b)) 1)))
-  (chkcps "(fn () a (b 1) c)"
-	  '(fn (#:k) (b (fn (#:r) (#:k c)) 1)))
-  (chkcps "(fn () a (b 1) c d)"
-	  '(fn (#:k) (b (fn (#:r) (#:k d)) 1)))
-  (chkcps "(fn () (a 1))"
-	  '(fn (#:k) (a (fn (#:r) (#:k #:r)) 1)))
-  (chkcps "(fn () (a 1) (b 2))"
+  (chkcps "(fn () a)"               '(fn (#:k) (#:k a)))
+  (chkcps "(fn () a b)"             '(fn (#:k) (#:k b)))
+  (chkcps "(fn () a b c)"           '(fn (#:k) (#:k c)))
+  (chkcps "(fn (x) (+ 1 (sqrt x)))" '(fn (#:k x) (#:k (+ 1 (sqrt x)))))
+  (chkcps "(fn () (a 1) b)"         '(fn (#:k) (a (fn (#:r) (#:k b)) 1)))
+  (chkcps "(fn () a (b 1) c)"       '(fn (#:k) (b (fn (#:r) (#:k c)) 1)))
+  (chkcps "(fn () a (b 1) c d)"     '(fn (#:k) (b (fn (#:r) (#:k d)) 1)))
+  (chkcps "(fn () (a 1))"           '(fn (#:k) (a (fn (#:r) (#:k #:r)) 1)))
+  (chkcps "(fn () (a 1) (b 2))"     
 	  '(fn (#:k) (a (fn (#:r1) (b (fn (#:r2) (#:k #:r2)) 2)) 1))))
 
 (deftest c-funcall
-  (chkcps "(+)" 
-	  '(+))
-  (chkcps "(a (+))" 
-	  '(a (fn (#:k) #:k) (+)))
-  (chkcps "(a (b))"
-	  '(b (fn (#:k1) (a (fn (#:k2) #:k2) #:k1))))
-  (chkcps "(a (+ 1))"
-	  '(a (fn (#:k) #:k) (+ 1)))
-  (chkcps "(a (+ 1) (b 2))"
-	  '(b (fn (#:k1)
-		(a (fn (#:k2) #:k2)
-		   (+ 1)
-		   #:k1))
-	    2))
-  (chkcps "(+ 1 (a 1 (b 2) 3))"
+  (chkcps "(+)"             '(+))
+  (chkcps "(a (+))"         '(a (fn (#:k) #:k) (+)))
+  (chkcps "(a (b))"         '(b (fn (#:k1) (a (fn (#:k2) #:k2) #:k1))))
+  (chkcps "(a (+ 1))"       '(a (fn (#:k) #:k) (+ 1)))
+  (chkcps "(a (+ 1) (b 2))" '(b (fn (#:k1)
+				 (a (fn (#:k2) #:k2)
+				  (+ 1)
+				  #:k1))
+			      2))
+  (chkcps "(+ 1 (a 1 (b 2) 3))"        
 	  '(b (fn (#:k1) (a (fn (#:k2) (+ 1 #:k2)) 1 #:k1 3)) 2))
   (chkcps "(+ 1 (- 2 (hi (sqrt x))))"
 	  '(hi (fn (#:k)
@@ -185,12 +162,3 @@
 	     ((fn (#:i) (if a (#:i b) (#:i c)))
 	      (fn (#:n) (#:k (set x 10)))))
 	    (fn (#:r) #:r))))
-
-#|
-  (chkcps "(fn () (if a b) d)"
-	  '(fn (#:k)
-	    ((fn (#:i) 
-	      (if a (#:i b)
-|#
-	     
-		    

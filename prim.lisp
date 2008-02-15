@@ -39,7 +39,7 @@
   (_ funcall3 a1 a2 a3)
   (_ funcall4 a1 a2 a3 a4))
 
-;; Apply is _not_ a primitive
+;; Apply is _not_ a primitive (gets the cc)
 (defun $apply (cont fn &rest _args)
   (labels ((_app-args (args)
 	     (cond ((null args) nil)
@@ -210,14 +210,14 @@
 (defprim uniq ()
   (gensym "$"))
 
-;; call-with-current-continuation
+;; ccc is also _not_ a primitive (ofc it gets the cc)
+(defun $ccc (cont fn)
+  (funcall fn cont 
+	   (lambda (k val)
+	     (declare (ignore k))
+	     (funcall cont val))))
 
-(defun %ccc (k)
-  (declare (ignore k))
-  (error "CCC Not implemented"))
-
-(defprim ccc (proc)
-  (%ccc proc))
+(defparameter $ccc #'$ccc)
 
 ;; Input/output
 

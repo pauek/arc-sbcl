@@ -187,8 +187,6 @@
 	     (let ((fn (%symval x)))
 	       (when (%tag? 'mac fn)
 		 (%rep fn))))))
-    (when (or (eq head 'def) (eq head 'mac))
-      (format t "; ~a: ~a~%" head (car rest)))
     (let ((m (_macro? head)))
       (if m 
 	  (arcmac (apply m #'identity rest))

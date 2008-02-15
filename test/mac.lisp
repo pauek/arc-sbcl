@@ -36,7 +36,11 @@
     (chkmac "(fn (a b) (do a b))" 
 	    '(fn (a b) (progn a b)))
     (chkev "((fn ((o y)) (set (x) 5) y))" 
-	   5)))
+	   5)
+    (chkev "((fn ((o a 1)) (set a 2) (set a 3)))"
+	   3)
+    (chkev "((fn () ((fn () 3)) ((fn () #\a))))"
+	   #\a)))
 
 (deftest m-nested
   (with-mac ((do (cc &rest b) (funcall cc `(progn ,@b))))

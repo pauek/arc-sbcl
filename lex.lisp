@@ -3,8 +3,6 @@
 ;;; 2008 (c) Pau Fernandez
 ;;; See COPYING for details
 
-(declaim (optimize (debug 3)))
-
 (in-package :arc)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

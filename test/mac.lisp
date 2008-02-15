@@ -1,6 +1,4 @@
 
-(declaim (optimize (debug 3)))
-
 (in-package :arc/test)
 
 (defmacro with-mac (macs &body body)

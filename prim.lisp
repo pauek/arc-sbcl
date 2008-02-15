@@ -3,8 +3,6 @@
 ;;; 2008 (c) Pau Fernandez
 ;;; See COPYING for details
 
-(declaim (optimize (debug 3)))
-
 (in-package :arc)
 
 ;;; Primitives
@@ -266,13 +264,14 @@
 
 (macrolet ((_f (name fn)
 	     `(defprim ,name (stream)
-		(let ((s (if stream
-			     *standard-input*
-			     stream)))
+		(let ((s (or stream *standard-input*)))
 		  (,fn s nil nil)))))
   (_f readc read-char)
-  (_f readb read-byte)
-  (_f peekc peek-char))
+  (_f readb read-byte))
+
+(defprim peekc (stream)
+  (let ((s (or stream *standard-input*)))
+    (peek-char nil s nil nil)))
 
 (macrolet ((_port (args)
 	     `(if (consp ,args) 

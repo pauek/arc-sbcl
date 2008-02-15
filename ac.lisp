@@ -3,9 +3,6 @@
 ;;; 2008 (c) Pau Fernandez
 ;;; See COPYING for details
 
-(declaim (optimize (debug 3)))
-(declaim (sb-ext:muffle-conditions sb-ext:compiler-note))
-
 (in-package :arc)
 
 ;;; Walker core

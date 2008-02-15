@@ -5,6 +5,8 @@
 
 (in-package :arc)
 
+(declaim #.*arc-opt*)
+
 ;;; Walker core
 
 (defmacro def-arc-walker ((name prefix) &rest +args)

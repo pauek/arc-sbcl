@@ -24,3 +24,10 @@
 	   :table
 	   :arcsym
 	   :rmsym))
+
+(in-package :arc)
+
+(defvar *arc-opt* 
+  '(optimize 
+    speed
+    (compilation-speed 0)))

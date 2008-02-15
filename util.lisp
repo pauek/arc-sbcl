@@ -5,6 +5,9 @@
 
 (in-package :arc)
 
+(declaim #.*arc-opt*)
+
+
 (defun %car (x)
   (and (consp x) (car x)))
 

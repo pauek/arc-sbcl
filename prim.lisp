@@ -19,14 +19,6 @@
 
 (defstruct prim fn)
 
-(defmacro defprim (name args &body body)
-  (let ((_name (%sym name)))
-    `(progn
-       (%add-prim ',name)
-       (defun ,_name ,args ,@body)
-       (defparameter ,_name (make-prim :fn #',_name)))))
-
-
 (macrolet 
     ((_ (name &rest args)
        `(defun ,name (fn cont ,@args)
@@ -38,6 +30,7 @@
   (_ $funcall2 a1 a2)
   (_ $funcall3 a1 a2 a3)
   (_ $funcall4 a1 a2 a3 a4))
+
 
 ;; Apply is _not_ a primitive (gets the cc)
 (defun $apply (cont fn &rest _args)
@@ -56,6 +49,23 @@
 
 (defparameter $apply #'$apply)
 
+;; ccc is also _not_ a primitive
+(defun $ccc (cont fn)
+  (funcall fn cont 
+	   (lambda (k val)
+	     (declare (ignore k))
+	     (funcall cont val))))
+
+(defparameter $ccc #'$ccc)
+
+;;; defprim
+
+(defmacro defprim (name args &body body)
+  (let ((_name (%sym name)))
+    `(progn
+       (%add-prim ',name)
+       (defun ,_name ,args ,@body)
+       (defparameter ,_name (make-prim :fn #',_name)))))
 
 (defprim bound (x)
   (%boundp x))
@@ -209,15 +219,6 @@
 
 (defprim uniq ()
   (gensym "$"))
-
-;; ccc is also _not_ a primitive (ofc it gets the cc)
-(defun $ccc (cont fn)
-  (funcall fn cont 
-	   (lambda (k val)
-	     (declare (ignore k))
-	     (funcall cont val))))
-
-(defparameter $ccc #'$ccc)
 
 ;; Input/output
 

@@ -221,6 +221,7 @@
 	(curr 0))
     (labels ((_w/cc? (e)
 	       (or (stringp e)
+		   (and (consp e) (consp (car e)))
 		   (and (consp e) (eq (car e) 'fn))
 		   (and (consp e) (eq (car e) 'quote))
 		   (and (symbolp e)

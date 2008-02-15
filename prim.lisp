@@ -29,15 +29,15 @@
 
 (macrolet 
     ((_ (name &rest args)
-       `(defprim ,name (fn cont ,@args)
+       `(defun ,name (fn cont ,@args)
 	  (cond ((prim-p fn) (funcall cont (funcall (prim-fn fn) ,@args)))
 		((functionp fn) (funcall fn cont ,@args))
 		(t ($apply cont fn (list ,@args)))))))
-  (_ funcall0)
-  (_ funcall1 a1)
-  (_ funcall2 a1 a2)
-  (_ funcall3 a1 a2 a3)
-  (_ funcall4 a1 a2 a3 a4))
+  (_ $funcall0)
+  (_ $funcall1 a1)
+  (_ $funcall2 a1 a2)
+  (_ $funcall3 a1 a2 a3)
+  (_ $funcall4 a1 a2 a3 a4))
 
 ;; Apply is _not_ a primitive (gets the cc)
 (defun $apply (cont fn &rest _args)

@@ -242,7 +242,7 @@
 	    ((null rest)
 	     (if (_w/cc? head)
 		 (let ((k (gensym "K")))
-		   `(,(arccps head) (fn (,k) ,(funcall cc k))))
+		   `(,(arccps head) (fn (,k) ,@(%rm-do? (funcall cc k)))))
 		 (funcall cc `(,head))))
 	    (t (arccps (car rest) #'_next))))))
 

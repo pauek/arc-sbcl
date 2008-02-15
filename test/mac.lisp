@@ -39,7 +39,7 @@
 	   5)
     (chkev "((fn ((o a 1)) (set a 2) (set a 3)))"
 	   3)
-    (chkev "((fn () ((fn () 3)) ((fn () #\a))))"
+    (chkev "((fn () ((fn () 3)) ((fn () #\\a))))"
 	   #\a)))
 
 (deftest m-nested

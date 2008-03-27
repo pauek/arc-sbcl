@@ -392,6 +392,11 @@
 
 ;;; arcev
 
+;; From: http://paste.lisp.org/display/32712
+;; (eval-always
+;;  (handler-bind ((style-warning #'muffle-warning))
+;;    (defun x ())))
+
 (defun %arcev (form)
   (flet ((_ign-warn (condition)
 	   (declare (ignore condition))

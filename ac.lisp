@@ -134,9 +134,9 @@
 
 (defun %expand-syntax (sym)
   (labels ((_chars (sym)
-	     (map 'list #'identity (symbol-name sym)))
+	     (coerce (symbol-name sym) 'list))
 	   (_charsval (chs)
-	     (read-from-string (map 'string #'identity chs)))
+	     (read-from-string (coerce chs 'string)))
 	   (_exp1 (tok)
 	     (if (eq (car tok) *neg-char*)
 		 `(complement ,(_charsval (cdr tok)))

@@ -330,12 +330,12 @@
 	  ((stringp x)
 	   (case type 
 	     (sym    (intern x))
-	     (cons   (map 'list #'identity x))
+	     (cons   (coerce x 'list))
 	     (int    (or (apply #'_str->num x args)))
 	     (t      (_err))))
 	  ((consp x)
 	   (case type
-	     (string (map 'string #'identity x))
+	     (string (coerce x 'string))
 	     (t      (_err))))
 	  ((null x)
 	   (case type
